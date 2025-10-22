@@ -14,5 +14,12 @@ class Product extends Model
         'stock',
         'price',
         'cost_price',
+        'shop_id',
     ];
+
+    public function shop()
+    {
+        return $this->belongsTo(Shop::class);
+    }
 }
+

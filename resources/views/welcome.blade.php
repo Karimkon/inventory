@@ -92,6 +92,14 @@
                             Admin Login
                         </div>
                     </a>
+                    <a href="{{ url('shop/login') }}" class="role-card group p-6 rounded-2xl text-center relative overflow-hidden">
+                        <div class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">🛒</div>
+                        <h4 class="text-xl font-bold mb-2 text-green-300">Shopistrator</h4>
+                        <p class="text-sm text-gray-300 mb-4">Handle sales & customer service</p>
+                        <div class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-lg font-semibold transition-colors duration-300">
+                            Shopistrator Login
+                        </div>
+                    </a>
 
                 </div>
             </div>

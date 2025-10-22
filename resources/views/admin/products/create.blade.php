@@ -14,6 +14,19 @@
 
     <form action="{{ route('admin.products.store') }}" method="POST">
         @csrf
+
+        <div class="mb-3">
+            <label class="form-label">Shop *</label>
+            <select name="shop_id" class="form-control" required>
+                <option value="">Select Shop</option>
+                @foreach($shops as $shop)
+                    <option value="{{ $shop->id }}" {{ old('shop_id') == $shop->id ? 'selected' : '' }}>
+                        {{ $shop->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
         <div class="mb-3">
             <label class="form-label">Product Name</label>
             <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>

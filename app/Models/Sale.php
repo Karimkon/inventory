@@ -14,10 +14,16 @@ class Sale extends Model
         'quantity',
         'sold_price',
         'cost_price',
+        'shop_id',
     ];
 
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function shop()
+    {
+        return $this->belongsTo(Shop::class);
     }
 }

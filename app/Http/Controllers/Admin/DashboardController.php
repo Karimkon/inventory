@@ -1,37 +1,47 @@
 <?php
-
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\Shop;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        // Products stats
+        // SaaS Overview Stats
+        $totalShops = Shop::count();
+        $totalUsers = User::where('role', 'shop')->count();
         $totalProducts = Product::count();
-        $recentProducts = Product::latest()->take(5)->get();
+        
+        // Shop performance metrics
+        $topShops = Shop::withCount(['products', 'sales'])
+            ->withSum('sales', 'quantity')
+            ->orderBy('sales_sum_quantity', 'desc')
+            ->take(5)
+            ->get();
 
-        // Sales & profit calculations
+        // System-wide sales & profit
         $salesToday = Sale::whereDate('created_at', Carbon::today())->sum('quantity');
         $profitToday = Sale::whereDate('created_at', Carbon::today())
-            ->sum(\DB::raw('(sold_price - cost_price) * quantity'));
+            ->sum(DB::raw('(sold_price - cost_price) * quantity'));
 
         $salesWeek = Sale::whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->sum('quantity');
         $profitWeek = Sale::whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
-            ->sum(\DB::raw('(sold_price - cost_price) * quantity'));
+            ->sum(DB::raw('(sold_price - cost_price) * quantity'));
 
         $salesMonth = Sale::whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])->sum('quantity');
         $profitMonth = Sale::whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
-            ->sum(\DB::raw('(sold_price - cost_price) * quantity'));
+            ->sum(DB::raw('(sold_price - cost_price) * quantity'));
 
-        // Filter for Latest Sold Items table
+        // Latest sales across all shops
         $filter = $request->query('filter', 'today');
-        $salesQuery = Sale::with('product')->latest();
+        $salesQuery = Sale::with(['product', 'shop'])->latest();
 
         switch ($filter) {
             case 'week':
@@ -54,10 +64,13 @@ class DashboardController extends Controller
         }
 
         $latestSales = $salesQuery->paginate(10);
+        $recentShops = Shop::latest()->take(5)->get();
 
         return view('admin.dashboard', compact(
+            'totalShops',
+            'totalUsers',
             'totalProducts',
-            'recentProducts',
+            'topShops',
             'salesToday',
             'profitToday',
             'salesWeek',
@@ -65,6 +78,7 @@ class DashboardController extends Controller
             'salesMonth',
             'profitMonth',
             'latestSales',
+            'recentShops',
             'filter'
         ));
     }

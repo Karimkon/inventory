@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>@yield('title', 'SN Admin Dashboard')</title>
+<title>@yield('title', 'SN Shop Dashboard')</title>
 
 <!-- Bootstrap + Icons + Fonts -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -14,8 +14,8 @@
 
 <style>
 :root {
-    --primary: #0d6efd;
-    --primary-hover: #0b5ed7;
+    --shop-primary: #10b981;  /* Green theme for shop */
+    --shop-primary-hover: #059669;
     --sidebar-bg: #1f2937;
     --sidebar-text: #e5e7eb;
     --sidebar-hover: #fff;
@@ -56,15 +56,16 @@ body {
     font-size: 1.2rem;
     padding: 1rem;
     border-bottom: 1px solid rgba(255,255,255,0.2);
-    color: var(--primary);
+    color: var(--shop-primary);
 }
 
-.sidebar-logo img {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-bottom: 0.5rem;
+.shop-badge {
+    background: var(--shop-primary);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    margin-left: 0.5rem;
 }
 
 .sidebar a {
@@ -81,10 +82,31 @@ body {
     transition: all 0.3s ease;
 }
 .sidebar a:hover, .sidebar a.active {
-    background: var(--primary);
+    background: var(--shop-primary);
     color: var(--sidebar-hover);
     transform: translateX(4px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Shop Info Section */
+.shop-info {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem;
+    text-align: center;
+}
+
+.shop-name {
+    font-weight: 600;
+    color: var(--shop-primary);
+    margin-bottom: 0.5rem;
+}
+
+.shop-role {
+    font-size: 0.8rem;
+    color: #9ca3af;
 }
 
 /* Sidebar Footer */
@@ -100,13 +122,14 @@ body {
     gap: 0.5rem;
     padding: 0.6rem;
     border-radius: 8px;
-    background: #EF4444;
+    background: #6b7280;
     color: #fff;
     border: none;
     font-weight: 500;
+    transition: all 0.3s ease;
 }
 .logout-button:hover { 
-    background: #DC2626; 
+    background: #4b5563; 
 }
 
 /* Main Content */
@@ -138,10 +161,30 @@ body {
         top: 10px;
         left: 10px;
         font-size: 1.8rem;
-        color: var(--primary);
+        color: var(--shop-primary);
         z-index: 1100;
         cursor: pointer;
     }
+}
+
+/* Quick Stats in Sidebar */
+.quick-stats {
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 0.8rem;
+    margin: 1rem;
+    font-size: 0.85rem;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.3rem;
+}
+
+.stat-value {
+    color: var(--shop-primary);
+    font-weight: 600;
 }
 </style>
 </head>
@@ -153,28 +196,54 @@ body {
 <!-- Sidebar -->
 <div class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-        <div>SN General Hardware Admin</div>
+        <div>Inventory MGT <span class="shop-badge">SHOP</span></div>
+    </div>
+
+    <!-- Shop Info -->
+    <div class="shop-info">
+        <div class="shop-name">{{ Auth::user()->shop->name ?? 'My Shop' }}</div>
+        <div class="shop-role">Shop User</div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+        <div class="stat-item">
+            <span>Products:</span>
+            <span class="stat-value">{{ Auth::user()->shop->products->count() ?? 0 }}</span>
+        </div>
+        <div class="stat-item">
+            <span>Today's Sales:</span>
+            <span class="stat-value">UGX 0</span>
+        </div>
     </div>
 
     <div class="sidebar-content">
-        <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+        <a href="{{ route('shop.dashboard') }}" class="{{ request()->routeIs('shop.dashboard') ? 'active' : '' }}">
             <i class="bi bi-speedometer2"></i> Dashboard
         </a>
 
-        <a href="{{ route('admin.shops.index') }}" class="{{ request()->routeIs('admin.shops.*') ? 'active' : '' }}">
-            <i class="bi bi-shop"></i> Manage Shops
+        <a href="{{ route('shop.products.index') }}" class="{{ request()->routeIs('shop.products.index') ? 'active' : '' }}">
+            <i class="bi bi-box-seam"></i>Sell Products
         </a>
 
-        <a href="{{ route('admin.products.index') }}" class="{{ request()->routeIs('admin.products.index') ? 'active' : '' }}">
-            <i class="bi bi-list-check"></i> All Products
+        <a href="{{ route('shop.expenses.index') }}" class="{{ request()->routeIs('shop.expenses.*') ? 'active' : '' }}">
+            <i class="bi bi-cash-coin"></i> Expenses
         </a>
 
-        <a href="{{ route('admin.reports.index') }}" class="{{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-            <i class="bi bi-file-earmark-text"></i> Products Report
+        <a href="{{ route('shop.reports.index') }}" class="{{ request()->routeIs('shop.reports.*') ? 'active' : '' }}">
+            <i class="bi bi-graph-up"></i> Financial Reports
+        </a>
+
+        <a href="#" class="">
+            <i class="bi bi-receipt"></i> Today's Receipts
         </a>
     </div>
 
     <div class="sidebar-footer">
+        <div class="text-center text-muted small mb-2">
+            {{ Auth::user()->name }}<br>
+            <small>{{ Auth::user()->email }}</small>
+        </div>
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit" class="logout-button">
