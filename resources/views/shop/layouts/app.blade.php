@@ -230,6 +230,14 @@ body {
             <i class="bi bi-cash-coin"></i> Expenses
         </a>
 
+        <a href="{{ route('shop.loans.index') }}" class="{{ request()->routeIs('shop.loans.*') ? 'active' : '' }}">
+            <i class="bi bi-bank2"></i> Loans
+        </a>
+
+        <a href="{{ route('shop.depreciation.index') }}" class="{{ request()->routeIs('shop.depreciation.*') ? 'active' : '' }}">
+            <i class="bi bi-building"></i> Depreciation Assets
+        </a>
+
         <a href="{{ route('shop.reports.index') }}" class="{{ request()->routeIs('shop.reports.*') ? 'active' : '' }}">
             <i class="bi bi-graph-up"></i> Financial Reports
         </a>

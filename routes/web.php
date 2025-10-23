@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Shop\DashboardController as ShopDashboardController;
 use App\Http\Controllers\Shop\ProductController as ShopProductController;
+use App\Http\Controllers\Admin\ShopController;
 
 // Home
 Route::get('/', fn () => view('welcome'));
@@ -69,6 +70,17 @@ Route::post('/logout', function (Request $request) {
     return redirect('/');
 })->name('logout');
 
+// Public Onboarding Routes
+Route::prefix('onboarding')->name('onboarding.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\PublicOnboardingController::class, 'showOnboarding'])->name('show');
+    Route::post('/submit', [\App\Http\Controllers\PublicOnboardingController::class, 'submitApplication'])->name('submit');
+    Route::get('/{application}/payment', [\App\Http\Controllers\PublicOnboardingController::class, 'showPayment'])->name('payment');
+    Route::post('/{application}/process-payment', [\App\Http\Controllers\PublicOnboardingController::class, 'processPayment'])->name('process-payment');
+    Route::get('/pesapal-callback', [\App\Http\Controllers\PublicOnboardingController::class, 'pesapalCallback'])->name('pesapal-callback');
+    Route::get('/status', [\App\Http\Controllers\PublicOnboardingController::class, 'checkStatus'])->name('status');
+    Route::get('/status/{reference}', [\App\Http\Controllers\PublicOnboardingController::class, 'showStatus'])->name('status.show');
+});
+
 // ----------------------
 // Admin Protected Routes (System-wide management)
 // ----------------------
@@ -97,8 +109,28 @@ Route::middleware(['auth','role:admin'])->prefix('admin')->name('admin.')->group
     });
 
     // Shop Management (Admin manages all shops)
-    Route::resource('shops', \App\Http\Controllers\Admin\ShopController::class);
+    // Put specific routes BEFORE resource routes
+Route::prefix('shops')->name('shops.')->group(function () {
+    // Onboarding applications routes FIRST
+    Route::get('/onboarding-applications', [ShopController::class, 'onboardingApplications'])->name('onboarding-applications');
+    Route::get('/onboarding-applications/{application}', [ShopController::class, 'showApplication'])->name('onboarding-application-show');
+    Route::post('/onboarding-applications/{application}/approve', [ShopController::class, 'approveApplication'])->name('approve-application');
+    Route::post('/onboarding-applications/{application}/reject', [ShopController::class, 'rejectApplication'])->name('reject-application');
+    Route::get('/generate-password', [ShopController::class, 'generatePassword'])->name('generate-password');
+    
+    // THEN the resource route
+    Route::resource('/', \App\Http\Controllers\Admin\ShopController::class)->names([
+        'index' => 'index',
+        'create' => 'create',
+        'store' => 'store',
+        'show' => 'show',
+        'edit' => 'edit',
+        'update' => 'update',
+        'destroy' => 'destroy'
+    ]);
 });
+});
+
 
 // ----------------------
 // Shop Protected Routes (Shop-specific operations)
@@ -107,7 +139,9 @@ Route::middleware(['auth','role:shop'])->prefix('shop')->name('shop.')->group(fu
 
     // Dashboard (Shop-specific)
     Route::get('/dashboard', [ShopDashboardController::class,'index'])->name('dashboard');
-
+    Route::resource('loans', \App\Http\Controllers\Shop\LoanController::class); 
+    Route::post('/loans/{loan}/record-payment', [\App\Http\Controllers\Shop\LoanController::class, 'recordPayment'])
+    ->name('loans.record-payment');
     // Products Routes (Only for their shop)
    Route::prefix('products')->name('products.')->group(function () {
     Route::get('/', [ShopProductController::class,'index'])->name('index');
@@ -123,15 +157,26 @@ Route::get('/expenses/analytics', [\App\Http\Controllers\Shop\ExpenseController:
     ->name('expenses.analytics');
 Route::get('/expenses/analytics/pdf', [\App\Http\Controllers\Shop\ExpenseController::class, 'downloadAnalyticsPDF'])
     ->name('expenses.analytics.pdf');
+
     // Shop-specific reports
 Route::prefix('reports')->name('reports.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Shop\ReportController::class, 'index'])->name('index');
     Route::get('/profit-loss', [\App\Http\Controllers\Shop\ReportController::class, 'profitLoss'])->name('profit-loss');
     Route::get('/balance-sheet', [\App\Http\Controllers\Shop\ReportController::class, 'balanceSheet'])->name('balance-sheet');
-
-});
 });
 
+
+Route::prefix('depreciation')->name('depreciation.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Shop\DepreciationController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Shop\DepreciationController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Shop\DepreciationController::class, 'store'])->name('store');
+        Route::get('/{depreciation}/edit', [\App\Http\Controllers\Shop\DepreciationController::class, 'edit'])->name('edit');
+        Route::put('/{depreciation}', [\App\Http\Controllers\Shop\DepreciationController::class, 'update'])->name('update');
+        Route::delete('/{depreciation}', [\App\Http\Controllers\Shop\DepreciationController::class, 'destroy'])->name('destroy');
+        Route::get('/financial-analysis', [\App\Http\Controllers\Shop\DepreciationController::class, 'financialAnalysis'])->name('financial-analysis');
+        Route::post('/recalculate-values', [\App\Http\Controllers\Shop\DepreciationController::class, 'recalculateValues'])->name('recalculate-values');
+    });
+});
 // ----------------------
 // Override default login
 // ----------------------

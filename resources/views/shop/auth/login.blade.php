@@ -30,7 +30,7 @@
 <div class="d-flex align-items-center justify-content-center vh-100 px-3">
     <div class="login-container">
         <div class="text-center mb-4">
-            <h4 class="login-title">Shopistrator Login</h4>
+            <h4 class="login-title">Shop Login</h4>
         </div>
 
         @if(session('error'))
@@ -55,7 +55,7 @@
         </form>
 
         <div class="text-center mt-4">
-            <small class="text-muted">© {{ date('Y') }} SN General Hardware. All rights reserved. Built By Fahad </small>
+            <small class="text-muted">© {{ date('Y') }} Redvers. All rights reserved. Built By Fahad </small>
         </div>
     </div>
 </div>

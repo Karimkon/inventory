@@ -153,7 +153,7 @@ body {
 <!-- Sidebar -->
 <div class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-        <div>SN General Hardware Admin</div>
+        <div>ShopFlow Uganda Admin</div>
     </div>
 
     <div class="sidebar-content">
@@ -163,6 +163,10 @@ body {
 
         <a href="{{ route('admin.shops.index') }}" class="{{ request()->routeIs('admin.shops.*') ? 'active' : '' }}">
             <i class="bi bi-shop"></i> Manage Shops
+        </a>
+
+        <a href="{{ route('admin.shops.onboarding-applications') }}" class="{{ request()->routeIs('admin.shops.onboarding-applications') ? 'active' : '' }}">
+            <i class="bi bi-person-plus"></i> Onboarding Applications
         </a>
 
         <a href="{{ route('admin.products.index') }}" class="{{ request()->routeIs('admin.products.index') ? 'active' : '' }}">
