@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Application Status - SN General Hardware</title>
+    <title>Application Status - Redvers Shopflow Uganda</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
     <style>
@@ -102,7 +102,7 @@
                                 <div>
                                     <div class="font-bold">Next Step: Call for Activation</div>
                                     <div class="text-sm mt-1">
-                                        Please call our admin at <strong>+256-XXX-XXXXXX</strong> to complete your account setup.
+                                        Please call our admin at <strong>+256-707208954</strong> to complete your account setup.
                                         Your reference number is: <code class="bg-black/30 px-2 py-1 rounded">{{ $application->reference }}</code>
                                     </div>
                                 </div>

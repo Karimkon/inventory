@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>SN General Hardware Receipt</title>
+    <title>Shopflow Ug</title>
     <style>
         body {
             font-family: 'Courier New', Courier, monospace;
@@ -40,7 +40,7 @@
 </head>
 <body>
     <div class="header">
-        <h2>SN General Hardware</h2>
+        <h2>Shop flow Ug</h2>
         <p>Nakirebe Branch</p>
         <p>Sales Receipt</p>
         <p>{{ now()->format('Y-m-d H:i') }}</p>
@@ -76,7 +76,7 @@
 
     <div class="footer">
         <p>Thank you for your purchase!</p>
-        <p>SN General Hardware - Nakirebe</p>
+        <p>Shop flow </p>
     </div>
 </body>
 </html>

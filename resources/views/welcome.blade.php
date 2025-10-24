@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SN General Hardware - Admin Portal</title>
+    <title>Redvers ShopFlow Uganda - Admin Portal</title>
+    <link rel="icon" href="{{ asset('images/favicon.png') }}" type="image/png">
+
     
     <style>
         * {
@@ -339,7 +341,7 @@
         <div class="hero-section">
             <div class="logo-container">
                 <div class="logo-icon">📊</div>
-                <h1 class="main-title">ShopFlow Uganda</h1>
+                <h1 class="main-title">Redvers ShopFlow Uganda</h1>
                 <h2 class="subtitle">Smart Inventory & POS Management</h2>
             </div>
             
@@ -388,6 +390,7 @@
             <div class="footer">
                 <div class="footer-text">© 2025 ShopFlow Uganda. All rights reserved.</div>
                 <div class="footer-subtext">Empowering businesses with smart management tools 📊</div>
+                <b>Built by Abdulkarim software developer - 0707208954</b>
             </div>
         </div>
     </div>

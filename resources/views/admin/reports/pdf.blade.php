@@ -13,7 +13,7 @@
     </style>
 </head>
 <body>
-    <h2>SN General Hardware - Products Report</h2>
+    <h2>Shop Flow - Products Report</h2>
     <p>{{ now()->format('d M Y H:i') }}</p>
 
     <table>

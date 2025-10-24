@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Payment Status - SN General Hardware</title>
+    <title>Payment Status - Redvers Shopflow</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
     <style>
@@ -66,7 +66,7 @@
                             <div class="text-left">
                                 <div class="font-bold mb-2">Next Step: Call for Activation</div>
                                 <div class="text-sm">
-                                    Please call our admin at <strong>+256-XXX-XXXXXX</strong> to complete your account setup.
+                                    Please call our admin at <strong>+256-707208954</strong> to complete your account setup.
                                 </div>
                             </div>
                         </div>
@@ -111,12 +111,16 @@
                         View Status →
                     </a>
                 </div>
-                <div class="bg-white/5 p-4 rounded-lg">
-                    <div class="text-2xl mb-2">🛠️</div>
-                    <h3 class="font-bold mb-2">Need Help?</h3>
-                    <p class="text-sm text-gray-300">Contact our support team</p>
-                    <div class="text-xs text-gray-400 mt-2">support@sngeneralhardware.com</div>
+                <div class="bg-white/10 p-5 rounded-lg shadow-lg">
+                    <div class="text-3xl mb-3">🛠️</div>
+                    <h3 class="font-semibold mb-3 text-xl">Need Assistance?</h3>
+                    <p class="text-sm text-gray-300">Reach out to our support team:</p>
+                    <div class="flex flex-col mt-2">
+                        <span class="text-sm text-gray-200">Phone: <a href="tel:+0788135150" class="text-blue-400">0788135150</a></span>
+                        <span class="text-xs text-gray-400">Email: <a href="mailto:redvers@gmail.com" class="text-blue-400">redvers@gmail.com</a></span>
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>

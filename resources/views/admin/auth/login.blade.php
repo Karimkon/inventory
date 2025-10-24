@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Login - SN General Hardware</title>
+    <title>Redvers ShopFlow Uganda</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="{{ asset('images/favicon.png') }}" type="image/png">
 
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -55,7 +56,7 @@
         </form>
 
         <div class="text-center mt-4">
-            <small class="text-muted">© {{ date('Y') }} SN General Hardware. All rights reserved. Built By Fahad </small>
+            <small class="text-muted">© {{ date('Y') }} Shopflow. All rights reserved. Built By Fahad </small>
         </div>
     </div>
 </div>

@@ -149,7 +149,7 @@ class ProductController extends Controller
             $connector = new WindowsPrintConnector("XP-58"); // USB printer name
             $printer = new Printer($connector);
 
-            $printer->text("SN Hardware\n");
+            $printer->text("Shop flow Ug\n");
             $printer->text("Sale Receipt\n");
             $printer->text("----------------------------\n");
             $printer->text("Product: " . $sale->product->name . "\n");

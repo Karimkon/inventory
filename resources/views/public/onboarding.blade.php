@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Get Started - SN General Hardware SaaS</title>
+    <title>Get Started - RedversShopflow Hardware SaaS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
     <style>
@@ -25,7 +25,7 @@
         <!-- Header -->
         <div class="text-center mb-8">
             <h1 class="text-4xl font-bold mb-2">🚀 Get Your Business Online</h1>
-            <p class="text-xl text-blue-200">Join SN General Hardware SaaS Platform</p>
+            <p class="text-xl text-blue-200">Join Redvers Shopflow SaaS Platform</p>
             <a href="{{ url('/') }}" class="text-cyan-300 hover:text-cyan-100 text-sm mt-4 inline-block">
                 ← Back to Home
             </a>

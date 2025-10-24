@@ -9,7 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ asset('bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" href="{{ asset('images/mklogo.png') }}" type="image/png">
+    <link rel="icon" href="{{ asset('images/favicon.png') }}" type="image/png">
 
     <style>
         body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; min-height: 100vh; overflow: hidden; position: relative; }
