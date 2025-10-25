@@ -37,6 +37,10 @@
                             <td><code>{{ $shop->slug }}</code></td>
                         </tr>
                         <tr>
+                            <th>POS PIN:</th>
+                            <td><code class="text-success fw-bold">{{ $shop->pos_pin ?? 'Not set' }}</code></td>
+                        </tr>
+                        <tr>
                             <th>Created:</th>
                             <td>{{ $shop->created_at->format('M d, Y H:i') }}</td>
                         </tr>

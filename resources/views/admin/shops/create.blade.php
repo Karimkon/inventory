@@ -38,6 +38,23 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+
+                         <div class="mb-3">
+            <label for="pos_pin" class="form-label">POS PIN *</label>
+            <div class="input-group">
+                <input type="text" class="form-control @error('pos_pin') is-invalid @enderror" 
+                       id="pos_pin" name="pos_pin" value="{{ old('pos_pin', sprintf('%04d', random_int(0, 9999))) }}" 
+                       maxlength="4" pattern="[0-9]{4}" required>
+                <button type="button" class="btn btn-outline-secondary" onclick="generatePin()">
+                    <i class="bi bi-arrow-repeat"></i> Generate
+                </button>
+            </div>
+            <div class="form-text">4-digit PIN for POS access</div>
+            @error('pos_pin')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
+    </div>
                     </div>
 
                     <div class="col-md-6">

@@ -47,7 +47,7 @@
             <!-- Business Plans -->
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 @foreach([
-                    'retail' => ['name' => 'Retail Shop', 'price' => '3,000', 'color' => 'green'],
+                    'retail' => ['name' => 'Retail Shop', 'price' => '2000', 'color' => 'green'],
                     'wholesale' => ['name' => 'Wholesale Business', 'price' => '120,000', 'color' => 'blue'],
                     'hardware' => ['name' => 'Hardware Store', 'price' => '200,000', 'color' => 'orange'],
                     'supermarket' => ['name' => 'Supermarket', 'price' => '500,000', 'color' => 'purple']
@@ -89,7 +89,7 @@
                                 <select name="business_type" required 
                                         class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-400">
                                     <option value="">Select Business Type</option>
-                                    <option value="retail">Retail Shop (UGX 80,000)</option>
+                                    <option value="retail">Retail Shop (UGX 2,000)</option>
                                     <option value="wholesale">Wholesale Business (UGX 120,000)</option>
                                     <option value="hardware">Hardware Store (UGX 200,000)</option>
                                     <option value="supermarket">Supermarket (UGX 500,000)</option>

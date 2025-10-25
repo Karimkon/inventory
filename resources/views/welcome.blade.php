@@ -315,6 +315,26 @@
             border-radius: 50%;
             animation: floatParticle 20s infinite ease-in-out;
         }
+
+
+        .pos-card .role-title { color: #7dd3fc; }
+.pos-card .role-button {
+    background: #0ea5e9;
+    color: white;
+}
+.pos-card:hover .role-button {
+    background: #0284c7;
+    transform: scale(1.05);
+}
+
+.form-control {
+    transition: all 0.3s ease;
+}
+.form-control:focus {
+    outline: none;
+    border-color: #0ea5e9 !important;
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+}
         
         @keyframes floatParticle {
             0%, 100% {
@@ -386,7 +406,60 @@
                     Check Application Status →
                 </a>
             </div>
+
+           <!-- Add this after the existing cards grid, around line 180 -->
+<div class="onboard-section">
+    <h3 class="section-title">Employee POS Access</h3>
+    
+    <div class="role-card pos-card">
+        <div class="role-icon">💳</div>
+        <h4 class="role-title">POS Terminal</h4>
+        <p class="role-description">Secure access for shop employees</p>
+        
+        <!-- POS Login Form -->
+        <form action="{{ route('pos.login.submit') }}" method="POST" class="mt-3">
+            @csrf
+            <div style="margin-bottom: 1rem;">
+                <input type="text" 
+                       name="shop_identifier" 
+                       class="form-control" 
+                       placeholder="Enter Shop ID or Name" 
+                       required
+                       style="width: 100%; 
+                              padding: 0.75rem; 
+                              border: 1px solid rgba(148, 163, 184, 0.3); 
+                              border-radius: 12px; 
+                              background: rgba(30, 41, 59, 0.8); 
+                              color: white;
+                              font-size: 0.95rem;
+                              margin-bottom: 1rem;">
+            </div>
             
+            <div style="margin-bottom: 1rem;">
+                <input type="password" 
+                       name="pos_pin" 
+                       class="form-control" 
+                       placeholder="Enter POS PIN" 
+                       maxlength="4"
+                       required
+                       style="width: 100%; 
+                              padding: 0.75rem; 
+                              border: 1px solid rgba(148, 163, 184, 0.3); 
+                              border-radius: 12px; 
+                              background: rgba(30, 41, 59, 0.8); 
+                              color: white;
+                              font-size: 0.95rem;">
+                @error('pos_pin')
+                    <small style="color: #ef4444; display: block; margin-top: 0.5rem;">{{ $message }}</small>
+                @enderror
+            </div>
+            
+            <button type="submit" class="role-button" style="border: none; cursor: pointer;">
+                🔐 Access POS Terminal
+            </button>
+        </form>
+    </div>
+</div> 
             <div class="footer">
                 <div class="footer-text">© 2025 ShopFlow Uganda. All rights reserved.</div>
                 <div class="footer-subtext">Empowering businesses with smart management tools 📊</div>

@@ -75,8 +75,9 @@
                         <div class="text-2xl mr-3">📞</div>
                         <div>
                             <div class="font-bold">After Payment:</div>
-                            <div class="text-sm">Call <strong>+256-XXX-XXXXXX</strong> for activation</div>
+                            <div class="text-sm">Call <a href="tel:+256741613506"><strong>+256-741613506</strong></a> for activation</div>
                         </div>
+
                     </div>
                 </div>
 

@@ -21,7 +21,7 @@ class PublicOnboardingController extends Controller
     const PLANS = [
         'retail' => [
             'name' => 'Retail Shop',
-            'activation_fee' => 50000,
+            'activation_fee' => 2000,
             'monthly_fee' => 15000,
             'features' => ['Basic Inventory', 'Sales Tracking', 'Basic Reports']
         ],
@@ -115,67 +115,76 @@ class PublicOnboardingController extends Controller
     /**
      * Process Pesapal payment
      */
-    public function processPayment(OnboardingApplication $application)
-    {
-        if ($application->status === 'paid') {
-            return redirect()->route('onboarding.status', ['reference' => $application->reference])
-                ->with('info', 'Payment already completed.');
-        }
-
-        try {
-            $reference = 'PAY-' . Str::uuid()->toString();
-            $plan = self::PLANS[$application->business_type];
-            
-            $orderData = [
-                "id" => Str::uuid()->toString(),
-                "currency" => "UGX",
-                "amount" => $application->activation_fee,
-                "description" => "Shop Activation Fee - " . $plan['name'],
-                "callback_url" => route('onboarding.pesapal-callback'),
-                "notification_id" => config('pesapal.notification_id'),
-                "merchant_reference" => $reference,
-                "billing_address" => [
-                    "email_address" => $application->email,
-                    "phone_number" => $application->phone,
-                    "first_name" => explode(' ', $application->owner_name)[0],
-                    "last_name" => explode(' ', $application->owner_name)[1] ?? '',
-                    "line_1" => $application->business_name,
-                    "city" => "Kampala",
-                    "state" => "Central",
-                    "postal_code" => "256",
-                    "zip_code" => "256",
-                    "country_code" => "UG"
-                ]
-            ];
-
-            $response = $this->pesapalService->submitOrder($orderData);
-            
-            if (isset($response['order_tracking_id'])) {
-                // Update application with tracking info
-                $application->update([
-                    'pesapal_tracking_id' => $response['order_tracking_id'],
-                    'payment_reference' => $reference,
-                    'status' => 'processing_payment',
-                ]);
-
-                // Store in session for callback
-                session([
-                    'pending_application_id' => $application->id,
-                    'pending_payment_reference' => $reference,
-                ]);
-
-                return redirect()->away($response['redirect_url']);
-            }
-
-            throw new \Exception('Failed to get tracking ID from Pesapal');
-
-        } catch (\Exception $e) {
-            Log::error('Pesapal Payment Error: ' . $e->getMessage());
-            return back()->with('error', 'Payment processing failed: ' . $e->getMessage());
-        }
+    /**
+ * Process Pesapal payment
+ */
+public function processPayment(OnboardingApplication $application)
+{
+    if ($application->status === 'paid') {
+        return redirect()->route('onboarding.status', ['reference' => $application->reference])
+            ->with('info', 'Payment already completed.');
     }
 
-    /**
+    try {
+        $reference = 'PAY-' . Str::uuid()->toString();
+        $plan = self::PLANS[$application->business_type];
+        
+        $orderData = [
+            "id" => Str::uuid()->toString(),
+            "currency" => "UGX",
+            "amount" => $application->activation_fee,
+            "description" => "Shop Activation Fee - " . $plan['name'],
+            "callback_url" => route('onboarding.pesapal-callback'),
+            "notification_id" => config('pesapal.notification_id'),
+            "merchant_reference" => $reference,
+            "billing_address" => [
+                "email_address" => $application->email,
+                "phone_number" => $application->phone,
+                "first_name" => explode(' ', $application->owner_name)[0],
+                "last_name" => explode(' ', $application->owner_name)[1] ?? '',
+                "line_1" => $application->business_name,
+                "city" => "Kampala",
+                "state" => "Central",
+                "postal_code" => "256",
+                "zip_code" => "256",
+                "country_code" => "UG"
+            ]
+        ];
+
+        $response = $this->pesapalService->submitOrder($orderData);
+        
+        if (isset($response['order_tracking_id'])) {
+            // Update application with ALL payment info immediately
+            $application->update([
+                'pesapal_tracking_id' => $response['order_tracking_id'],
+                'payment_reference' => $reference,
+                'status' => 'processing_payment',
+            ]);
+
+            // Store in session as backup
+            session([
+                'pending_application_id' => $application->id,
+                'pending_payment_reference' => $reference,
+            ]);
+
+            Log::info('Payment initiated', [
+                'application_id' => $application->id,
+                'tracking_id' => $response['order_tracking_id'],
+                'payment_reference' => $reference
+            ]);
+
+            return redirect()->away($response['redirect_url']);
+        }
+
+        throw new \Exception('Failed to get tracking ID from Pesapal');
+
+    } catch (\Exception $e) {
+        Log::error('Pesapal Payment Error: ' . $e->getMessage());
+        return back()->with('error', 'Payment processing failed: ' . $e->getMessage());
+    }
+}
+
+ /**
  * Pesapal callback handler
  */
 public function pesapalCallback(Request $request)
@@ -186,63 +195,126 @@ public function pesapalCallback(Request $request)
     Log::info('Pesapal Callback Received', [
         'tracking_id' => $orderTrackingId,
         'merchant_ref' => $orderMerchantReference,
-        'all_params' => $request->all()
+        'all_params' => $request->all(),
+        'session_data' => session()->all()
     ]);
 
-    // Get application from session or database
+    // Try multiple ways to find the application
+    $application = null;
+
+    // 1. First try session (for immediate redirects)
     $applicationId = session('pending_application_id');
-    $application = OnboardingApplication::find($applicationId);
+    if ($applicationId) {
+        $application = OnboardingApplication::find($applicationId);
+        Log::info('Found application via session', ['application_id' => $applicationId]);
+    }
+
+    // 2. Try by payment reference (fallback)
+    if (!$application && $orderMerchantReference) {
+        $application = OnboardingApplication::where('payment_reference', $orderMerchantReference)->first();
+        Log::info('Trying to find application by payment reference', ['reference' => $orderMerchantReference]);
+    }
+
+    // 3. Try by Pesapal tracking ID (another fallback)
+    if (!$application && $orderTrackingId) {
+        $application = OnboardingApplication::where('pesapal_tracking_id', $orderTrackingId)->first();
+        Log::info('Trying to find application by tracking ID', ['tracking_id' => $orderTrackingId]);
+    }
 
     if (!$application) {
-        Log::error('Application not found in callback', ['application_id' => $applicationId]);
+        Log::error('Application not found in callback', [
+            'session_id' => $applicationId,
+            'merchant_ref' => $orderMerchantReference,
+            'tracking_id' => $orderTrackingId
+        ]);
+        
         return view('public.payment-status')
-            ->with('error', 'Application not found. Please contact support with your reference number.');
+            ->with('error', 'Application not found. Please contact support with your reference number.')
+            ->with('reference', $orderMerchantReference);
     }
 
     try {
         // Verify payment status with Pesapal
         $statusResponse = $this->pesapalService->getTransactionStatus($orderTrackingId);
         
+        Log::info('Pesapal Status Response', [
+            'application_id' => $application->id,
+            'status_response' => $statusResponse
+        ]);
+
         if ($statusResponse && isset($statusResponse['payment_status_description'])) {
             $paymentStatus = strtolower($statusResponse['payment_status_description']);
             
+            Log::info('Payment Status Determined', [
+                'application_id' => $application->id,
+                'status' => $paymentStatus
+            ]);
+
             if ($paymentStatus === 'completed') {
                 // Update application as paid (pending admin approval)
                 $application->update([
                     'status' => 'paid',
                     'payment_reference' => $orderMerchantReference,
                     'paid_at' => now(),
+                    'pesapal_tracking_id' => $orderTrackingId,
                 ]);
 
                 // Clear session
                 session()->forget(['pending_application_id', 'pending_payment_reference']);
 
+                Log::info('Payment marked as completed', ['application_id' => $application->id]);
+
                 return view('public.payment-status')
-                    ->with('success', true)
-                    ->with('message', 'Payment completed successfully! Please call admin for activation.')
+                    ->with('success', 'Payment completed successfully! Please call admin for activation.')
                     ->with('reference', $application->reference)
                     ->with('application', $application);
 
             } else {
+                // Payment is pending or failed
                 $application->update([
                     'status' => 'payment_failed',
+                    'admin_notes' => 'Payment status: ' . $paymentStatus,
+                ]);
+
+                Log::warning('Payment not completed', [
+                    'application_id' => $application->id,
+                    'status' => $paymentStatus
                 ]);
 
                 return view('public.payment-status')
-                    ->with('error', 'Payment failed or was cancelled. Please try again.')
-                    ->with('reference', $application->reference);
+                    ->with('error', 'Payment status: ' . $paymentStatus . '. Please try again.')
+                    ->with('reference', $application->reference)
+                    ->with('application', $application);
             }
         }
 
+        // If we can't get status, check if payment was already recorded
+        if ($application->status === 'paid') {
+            Log::info('Application already marked as paid', ['application_id' => $application->id]);
+            
+            return view('public.payment-status')
+                ->with('success', 'Payment already completed! Please call admin for activation.')
+                ->with('reference', $application->reference)
+                ->with('application', $application);
+        }
+
+        Log::warning('Unable to verify payment status', ['application_id' => $application->id]);
+
         return view('public.payment-status')
-            ->with('error', 'Unable to verify payment status. Please contact support.')
-            ->with('reference', $application->reference);
+            ->with('error', 'Unable to verify payment status immediately. Please check your application status in a few minutes.')
+            ->with('reference', $application->reference)
+            ->with('application', $application);
 
     } catch (\Exception $e) {
-        Log::error('Pesapal Callback Error: ' . $e->getMessage());
+        Log::error('Pesapal Callback Error: ' . $e->getMessage(), [
+            'application_id' => $application->id,
+            'trace' => $e->getTraceAsString()
+        ]);
+        
         return view('public.payment-status')
             ->with('error', 'Error verifying payment: ' . $e->getMessage())
-            ->with('reference', $application->reference);
+            ->with('reference', $application->reference)
+            ->with('application', $application);
     }
 }
     /**
@@ -259,6 +331,67 @@ public function pesapalCallback(Request $request)
 
         return view('public.status');
     }
+
+
+    /**
+ * Pesapal IPN handler - For server-to-server notifications
+ */
+public function pesapalIPN(Request $request)
+{
+    Log::info('Pesapal IPN Received', $request->all());
+
+    $orderTrackingId = $request->input('OrderTrackingId');
+    $orderNotificationType = $request->input('OrderNotificationType');
+
+    Log::info('IPN Processing', [
+        'tracking_id' => $orderTrackingId,
+        'notification_type' => $orderNotificationType
+    ]);
+
+    if ($orderNotificationType == 'IPN') {
+        $application = OnboardingApplication::where('pesapal_tracking_id', $orderTrackingId)->first();
+
+        if ($application) {
+            try {
+                // Verify payment status with Pesapal
+                $statusResponse = $this->pesapalService->getTransactionStatus($orderTrackingId);
+                
+                Log::info('IPN Status Check', [
+                    'application_id' => $application->id,
+                    'status_response' => $statusResponse
+                ]);
+
+                if ($statusResponse && isset($statusResponse['payment_status_description'])) {
+                    $paymentStatus = strtolower($statusResponse['payment_status_description']);
+                    
+                    Log::info('IPN Payment Status', [
+                        'application_id' => $application->id,
+                        'status' => $paymentStatus
+                    ]);
+
+                    if ($paymentStatus === 'completed') {
+                        $application->update([
+                            'status' => 'paid',
+                            'paid_at' => now(),
+                        ]);
+                        Log::info('IPN: Payment marked as completed', ['application_id' => $application->id]);
+                    } elseif (in_array($paymentStatus, ['failed', 'cancelled'])) {
+                        $application->update([
+                            'status' => 'payment_failed',
+                            'admin_notes' => 'Payment failed via IPN: ' . $paymentStatus,
+                        ]);
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error('IPN Processing Error: ' . $e->getMessage());
+            }
+        } else {
+            Log::error('IPN: Application not found for tracking ID: ' . $orderTrackingId);
+        }
+    }
+
+    return response()->json(['status' => 'OK']);
+}
 
     /**
      * Show status with reference

@@ -28,6 +28,7 @@
                             <th>ID</th>
                             <th>Shop Name</th>
                             <th>Slug</th>
+                            <th>POS PIN</th>
                             <th>Products</th>
                             <th>Users</th>
                             <th>Created</th>
@@ -40,6 +41,9 @@
                             <td>{{ $shop->id }}</td>
                             <td class="fw-semibold">{{ $shop->name }}</td>
                             <td><code>{{ $shop->slug }}</code></td>
+                            <td>
+                                <code class="text-success fw-bold">{{ $shop->pos_pin ?? 'N/A' }}</code>
+                            </td>
                             <td>
                                 <span class="badge bg-primary">{{ $shop->products_count }}</span>
                             </td>

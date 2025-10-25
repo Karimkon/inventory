@@ -14,7 +14,8 @@ class Shop extends Model
         'slug', 
         'business_type',
         'subscription_status',
-        'activated_at'
+        'activated_at',
+        'pos_pin'
     ];
 
     protected $casts = [
@@ -50,5 +51,21 @@ class Shop extends Model
     public function getHasActiveSubscriptionAttribute()
     {
         return $this->subscription_status === 'active' && $this->activeSubscription;
+    }
+
+     /**
+     * Generate a random 4-digit PIN
+     */
+    public static function generateRandomPin()
+    {
+        return sprintf('%04d', random_int(0, 9999));
+    }
+    
+    /**
+     * Check if POS PIN is valid
+     */
+    public function verifyPosPin($pin)
+    {
+        return $this->pos_pin === $pin; // Simple comparison for now
     }
 }

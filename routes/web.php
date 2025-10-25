@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Shop\DashboardController as ShopDashboardController;
 use App\Http\Controllers\Shop\ProductController as ShopProductController;
 use App\Http\Controllers\Admin\ShopController;
+use App\Http\Controllers\PosController;
 
 // Home
 Route::get('/', fn () => view('welcome'));
@@ -18,6 +19,17 @@ Route::get('/', fn () => view('welcome'));
 // ----------------------
 Route::get('/admin/login', fn () => view('admin.auth.login'))->name('admin.login');
 Route::get('/shop/login', fn () => view('shop.auth.login'))->name('shop.login');
+
+// POS Routes (Public access)
+Route::prefix('pos')->name('pos.')->group(function () {
+    Route::get('/login', [PosController::class, 'showLogin'])->name('login'); 
+    Route::post('/login', [PosController::class, 'login'])->name('login.submit');
+    Route::get('/dashboard', [PosController::class, 'dashboard'])->name('dashboard');
+    Route::post('/sell/{product}', [PosController::class, 'sell'])->name('sell');
+    Route::get('/receipt/{product}/{qty}', [PosController::class, 'receipt'])->name('receipt');
+    Route::post('/expenses', [PosController::class, 'storeExpense'])->name('expenses.store');
+    Route::post('/logout', [PosController::class, 'logout'])->name('logout');
+});
 
 // ----------------------
 // Login submit per role
@@ -77,6 +89,10 @@ Route::prefix('onboarding')->name('onboarding.')->group(function () {
     Route::get('/{application}/payment', [\App\Http\Controllers\PublicOnboardingController::class, 'showPayment'])->name('payment');
     Route::post('/{application}/process-payment', [\App\Http\Controllers\PublicOnboardingController::class, 'processPayment'])->name('process-payment');
     Route::get('/pesapal-callback', [\App\Http\Controllers\PublicOnboardingController::class, 'pesapalCallback'])->name('pesapal-callback');
+
+     // ADD THIS IPN ROUTE - Pesapal sends POST requests here
+    Route::post('/pesapal-ipn', [\App\Http\Controllers\PublicOnboardingController::class, 'pesapalIPN'])->name('pesapal-ipn');
+    
     Route::get('/status', [\App\Http\Controllers\PublicOnboardingController::class, 'checkStatus'])->name('status');
     Route::get('/status/{reference}', [\App\Http\Controllers\PublicOnboardingController::class, 'showStatus'])->name('status.show');
 });
@@ -118,55 +134,59 @@ Route::prefix('shops')->name('shops.')->group(function () {
     Route::post('/onboarding-applications/{application}/reject', [ShopController::class, 'rejectApplication'])->name('reject-application');
     Route::get('/generate-password', [ShopController::class, 'generatePassword'])->name('generate-password');
     
-    // THEN the resource route
-    Route::resource('/', \App\Http\Controllers\Admin\ShopController::class)->names([
-        'index' => 'index',
-        'create' => 'create',
-        'store' => 'store',
-        'show' => 'show',
-        'edit' => 'edit',
-        'update' => 'update',
-        'destroy' => 'destroy'
-    ]);
-});
+    // Explicit shop routes (FIXED)
+        Route::get('/', [ShopController::class, 'index'])->name('index');
+        Route::get('/create', [ShopController::class, 'create'])->name('create');
+        Route::post('/', [ShopController::class, 'store'])->name('store');
+        Route::get('/{shop}', [ShopController::class, 'show'])->name('show');
+        Route::get('/{shop}/edit', [ShopController::class, 'edit'])->name('edit');
+        Route::put('/{shop}', [ShopController::class, 'update'])->name('update');
+        Route::delete('/{shop}', [ShopController::class, 'destroy'])->name('destroy');
+    });
 });
 
 
 // ----------------------
 // Shop Protected Routes (Shop-specific operations)
 // ----------------------
-Route::middleware(['auth','role:shop'])->prefix('shop')->name('shop.')->group(function(){
+// ----------------------
+// Shop Protected Routes (Shop-specific operations)
+// ----------------------
+Route::middleware(['auth','role:shop','verify.shop'])->prefix('shop')->name('shop.')->group(function(){
 
     // Dashboard (Shop-specific)
     Route::get('/dashboard', [ShopDashboardController::class,'index'])->name('dashboard');
     Route::resource('loans', \App\Http\Controllers\Shop\LoanController::class); 
     Route::post('/loans/{loan}/record-payment', [\App\Http\Controllers\Shop\LoanController::class, 'recordPayment'])
     ->name('loans.record-payment');
-    // Products Routes (Only for their shop)
-   Route::prefix('products')->name('products.')->group(function () {
-    Route::get('/', [ShopProductController::class,'index'])->name('index');
-    Route::get('/create', [ShopProductController::class,'create'])->name('create'); // ADD THIS
-    Route::post('/store', [ShopProductController::class,'store'])->name('store');   // ADD THIS
-    Route::post('/sell/{product}', [ShopProductController::class,'sell'])->name('sell');
-    Route::get('/receipt/{product}/{qty}', [ShopProductController::class,'receipt'])->name('receipt');
-});
 
-// Shop Expenses
-Route::resource('expenses', \App\Http\Controllers\Shop\ExpenseController::class);
-Route::get('/expenses/analytics', [\App\Http\Controllers\Shop\ExpenseController::class, 'analytics'])
-    ->name('expenses.analytics');
-Route::get('/expenses/analytics/pdf', [\App\Http\Controllers\Shop\ExpenseController::class, 'downloadAnalyticsPDF'])
-    ->name('expenses.analytics.pdf');
+     Route::prefix('products')->name('products.')->group(function () {
+        Route::get('/', [ShopProductController::class,'index'])->name('index');
+        Route::get('/create', [ShopProductController::class,'create'])->name('create');
+        Route::post('/store', [ShopProductController::class,'store'])->name('store');
+        Route::get('/{product}/edit', [ShopProductController::class,'edit'])->name('edit'); // NEW
+        Route::put('/{product}', [ShopProductController::class,'update'])->name('update'); // NEW
+        Route::post('/{product}/update-stock', [ShopProductController::class,'updateStock'])->name('update-stock'); // NEW
+        Route::post('/sell/{product}', [ShopProductController::class,'sell'])->name('sell');
+        Route::get('/receipt/{product}/{qty}', [ShopProductController::class,'receipt'])->name('receipt');
+        Route::get('/unified-receipt', [ShopProductController::class,'unifiedReceipt'])->name('unified-receipt'); // NEW
+    });
+
+    // Shop Expenses
+    Route::resource('expenses', \App\Http\Controllers\Shop\ExpenseController::class);
+    Route::get('/expenses/analytics', [\App\Http\Controllers\Shop\ExpenseController::class, 'analytics'])
+        ->name('expenses.analytics');
+    Route::get('/expenses/analytics/pdf', [\App\Http\Controllers\Shop\ExpenseController::class, 'downloadAnalyticsPDF'])
+        ->name('expenses.analytics.pdf');
 
     // Shop-specific reports
-Route::prefix('reports')->name('reports.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\Shop\ReportController::class, 'index'])->name('index');
-    Route::get('/profit-loss', [\App\Http\Controllers\Shop\ReportController::class, 'profitLoss'])->name('profit-loss');
-    Route::get('/balance-sheet', [\App\Http\Controllers\Shop\ReportController::class, 'balanceSheet'])->name('balance-sheet');
-});
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Shop\ReportController::class, 'index'])->name('index');
+        Route::get('/profit-loss', [\App\Http\Controllers\Shop\ReportController::class, 'profitLoss'])->name('profit-loss');
+        Route::get('/balance-sheet', [\App\Http\Controllers\Shop\ReportController::class, 'balanceSheet'])->name('balance-sheet');
+    });
 
-
-Route::prefix('depreciation')->name('depreciation.')->group(function () {
+    Route::prefix('depreciation')->name('depreciation.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Shop\DepreciationController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Shop\DepreciationController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\Shop\DepreciationController::class, 'store'])->name('store');
@@ -177,6 +197,7 @@ Route::prefix('depreciation')->name('depreciation.')->group(function () {
         Route::post('/recalculate-values', [\App\Http\Controllers\Shop\DepreciationController::class, 'recalculateValues'])->name('recalculate-values');
     });
 });
+
 // ----------------------
 // Override default login
 // ----------------------
