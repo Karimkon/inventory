@@ -267,7 +267,8 @@ public function approveApplication(Request $request, OnboardingApplication $appl
         ]);
 
         // FIX: Pass the PIN to the email
-        Mail::to($user->email)->queue(new ShopWelcomeEmail($shop, $user, $adminPassword, $pin));
+        Mail::to($user->email)->send(new ShopWelcomeEmail($shop, $user, $adminPassword, $randomPin));
+
         
         \Log::info('Welcome email sent successfully', [
             'shop_id' => $shop->id,

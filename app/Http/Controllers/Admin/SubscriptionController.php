@@ -19,8 +19,16 @@ class SubscriptionController extends Controller
         
         $subscriptions = Subscription::with('shop')
             ->when($status !== 'all', function($query) use ($status) {
-                if ($status === 'pending_approval') {
-                    return $query->where('payment_status', 'paid')->where('is_active', false);
+                if ($status === 'active') {
+                    return $query->where('is_active', true)
+                                ->where('expires_at', '>', Carbon::now());
+                } elseif ($status === 'pending_approval') {
+                    return $query->where('payment_status', 'paid')
+                                ->where('is_active', false);
+                } elseif ($status === 'expired') {
+                    return $query->where('expires_at', '<=', Carbon::now());
+                } elseif ($status === 'pending_payment') {
+                    return $query->where('payment_status', 'pending');
                 }
                 return $query->where('payment_status', $status);
             })
@@ -29,12 +37,83 @@ class SubscriptionController extends Controller
 
         $stats = [
             'total' => Subscription::count(),
-            'active' => Subscription::where('is_active', true)->count(),
-            'pending_approval' => Subscription::where('payment_status', 'paid')->where('is_active', false)->count(),
+            'active' => Subscription::where('is_active', true)
+                        ->where('expires_at', '>', Carbon::now())->count(),
+            'pending_approval' => Subscription::where('payment_status', 'paid')
+                                ->where('is_active', false)->count(),
             'pending_payment' => Subscription::where('payment_status', 'pending')->count(),
+            'expired' => Subscription::where('expires_at', '<=', Carbon::now())->count(),
         ];
 
-        return view('admin.subscriptions.index', compact('subscriptions', 'stats', 'status'));
+        // Calculate total revenue
+        $totalRevenue = Subscription::where('payment_status', 'paid')->sum('total_amount');
+
+        return view('admin.subscriptions.index', compact('subscriptions', 'stats', 'status', 'totalRevenue'));
+    }
+
+    /**
+     * Display subscription analytics
+     */
+    public function analytics()
+    {
+        // Revenue by month for the last 6 months
+        $revenueByMonth = Subscription::where('payment_status', 'paid')
+            ->where('created_at', '>=', Carbon::now()->subMonths(6))
+            ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, SUM(total_amount) as revenue')
+            ->groupBy('year', 'month')
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->get();
+
+        // Subscriptions by plan type
+        $subscriptionsByPlan = Subscription::selectRaw('plan_type, COUNT(*) as count')
+            ->groupBy('plan_type')
+            ->get();
+
+        // Recent payments
+        $recentPayments = Subscription::with('shop')
+            ->where('payment_status', 'paid')
+            ->latest()
+            ->take(10)
+            ->get();
+
+        // Total statistics
+        $totalStats = [
+            'total_revenue' => Subscription::where('payment_status', 'paid')->sum('total_amount'),
+            'total_subscriptions' => Subscription::count(),
+            'active_subscriptions' => Subscription::where('is_active', true)
+                                ->where('expires_at', '>', Carbon::now())->count(),
+            'pending_approval' => Subscription::where('payment_status', 'paid')
+                                ->where('is_active', false)->count(),
+        ];
+
+        return view('admin.subscriptions.analytics', compact(
+            'revenueByMonth', 
+            'subscriptionsByPlan', 
+            'recentPayments',
+            'totalStats'
+        ));
+    }
+
+    /**
+     * Display revenue report
+     */
+    public function revenueReport()
+    {
+        $revenueData = Subscription::where('payment_status', 'paid')
+            ->selectRaw('plan_type, SUM(total_amount) as revenue, COUNT(*) as count')
+            ->groupBy('plan_type')
+            ->get();
+
+        $monthlyRevenue = Subscription::where('payment_status', 'paid')
+            ->where('created_at', '>=', Carbon::now()->subYear())
+            ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, SUM(total_amount) as revenue')
+            ->groupBy('year', 'month')
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->get();
+
+        return view('admin.subscriptions.revenue', compact('revenueData', 'monthlyRevenue'));
     }
 
     /**

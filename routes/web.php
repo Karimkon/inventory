@@ -143,6 +143,21 @@ Route::prefix('shops')->name('shops.')->group(function () {
         Route::put('/{shop}', [ShopController::class, 'update'])->name('update');
         Route::delete('/{shop}', [ShopController::class, 'destroy'])->name('destroy');
     });
+
+    // In your Admin Protected Routes section, add:
+Route::prefix('subscriptions')->name('subscriptions.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\SubscriptionController::class, 'index'])->name('index');
+    Route::get('/{subscription}', [\App\Http\Controllers\Admin\SubscriptionController::class, 'show'])->name('show');
+    Route::post('/{subscription}/approve', [\App\Http\Controllers\Admin\SubscriptionController::class, 'approve'])->name('approve');
+    Route::post('/{subscription}/reject', [\App\Http\Controllers\Admin\SubscriptionController::class, 'reject'])->name('reject');
+    Route::post('/{subscription}/extend', [\App\Http\Controllers\Admin\SubscriptionController::class, 'extend'])->name('extend');
+    Route::post('/{subscription}/deactivate', [\App\Http\Controllers\Admin\SubscriptionController::class, 'deactivate'])->name('deactivate');
+    
+    // Analytics routes
+    Route::get('/analytics/overview', [\App\Http\Controllers\Admin\SubscriptionController::class, 'analytics'])->name('analytics');
+    Route::get('/analytics/revenue', [\App\Http\Controllers\Admin\SubscriptionController::class, 'revenueReport'])->name('revenue');
+});
+
 });
 
 
@@ -152,7 +167,7 @@ Route::prefix('shops')->name('shops.')->group(function () {
 // ----------------------
 // Shop Protected Routes (Shop-specific operations)
 // ----------------------
-Route::middleware(['auth','role:shop','verify.shop'])->prefix('shop')->name('shop.')->group(function(){
+Route::middleware(['auth','role:shop'])->prefix('shop')->name('shop.')->group(function(){
 
     // Dashboard (Shop-specific)
     Route::get('/dashboard', [ShopDashboardController::class,'index'])->name('dashboard');
@@ -195,6 +210,13 @@ Route::middleware(['auth','role:shop','verify.shop'])->prefix('shop')->name('sho
         Route::delete('/{depreciation}', [\App\Http\Controllers\Shop\DepreciationController::class, 'destroy'])->name('destroy');
         Route::get('/financial-analysis', [\App\Http\Controllers\Shop\DepreciationController::class, 'financialAnalysis'])->name('financial-analysis');
         Route::post('/recalculate-values', [\App\Http\Controllers\Shop\DepreciationController::class, 'recalculateValues'])->name('recalculate-values');
+    });
+
+     // Subscription Renewal Routes
+    Route::prefix('subscription')->name('subscription.')->group(function () {
+        Route::get('/renew', [\App\Http\Controllers\Shop\SubscriptionController::class, 'showRenewal'])->name('renew');
+        Route::post('/renew', [\App\Http\Controllers\Shop\SubscriptionController::class, 'processRenewal'])->name('process-renewal');
+        Route::get('/status', [\App\Http\Controllers\Shop\SubscriptionController::class, 'status'])->name('status');
     });
 });
 

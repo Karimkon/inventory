@@ -19,6 +19,8 @@ class OnboardingApplication extends Model
         'location',
         'activation_fee',
         'monthly_fee',
+        'months_paid',
+        'total_amount',
         'status',
         'pesapal_tracking_id',
         'payment_reference',
@@ -29,6 +31,7 @@ class OnboardingApplication extends Model
     protected $casts = [
         'activation_fee' => 'decimal:2',
         'monthly_fee' => 'decimal:2',
+        'total_amount' => 'decimal:2',
         'paid_at' => 'datetime',
     ];
 
@@ -40,7 +43,7 @@ class OnboardingApplication extends Model
         $plans = [
             'retail' => [
                 'name' => 'Retail Shop',
-                'activation_fee' => 2000,
+                'activation_fee' => 50000,
                 'monthly_fee' => 15000,
                 'features' => ['Basic Inventory', 'Sales Tracking', 'Basic Reports']
             ],

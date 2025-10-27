@@ -21,7 +21,7 @@ class PublicOnboardingController extends Controller
     const PLANS = [
         'retail' => [
             'name' => 'Retail Shop',
-            'activation_fee' => 2000,
+            'activation_fee' => 50000,
             'monthly_fee' => 15000,
             'features' => ['Basic Inventory', 'Sales Tracking', 'Basic Reports']
         ],
@@ -50,53 +50,68 @@ class PublicOnboardingController extends Controller
      */
     public function showOnboarding()
     {
-        return view('public.onboarding');
+        $monthOptions = $this->getMonthOptions();
+        return view('public.onboarding', compact('monthOptions'));
     }
 
     /**
      * Process onboarding application
      */
-    public function submitApplication(Request $request)
-    {
-        $request->validate([
-            'business_name' => 'required|string|max:255',
-            'owner_name' => 'required|string|max:255',
-            'email' => 'required|email',
-            'phone' => 'required|string|max:20',
-            'business_type' => 'required|in:retail,wholesale,hardware,supermarket',
-            'location' => 'required|string|max:255',
-        ]);
+ public function submitApplication(Request $request)
+{
+    $request->validate([
+        'business_name' => 'required|string|max:255',
+        'owner_name' => 'required|string|max:255',
+        'email' => 'required|email',
+        'phone' => 'required|string|max:20',
+        'business_type' => 'required|in:retail,wholesale,hardware,supermarket',
+        'location' => 'required|string|max:255',
+        'months' => 'required|integer|min:1|max:48',
+    ]);
 
-        // Check if email already has pending application
-        $existingApplication = OnboardingApplication::where('email', $request->email)
-            ->whereIn('status', ['pending', 'paid', 'pending_approval'])
-            ->first();
+    // Check if email already has pending application
+    $existingApplication = OnboardingApplication::where('email', $request->email)
+        ->whereIn('status', ['pending', 'paid', 'pending_approval'])
+        ->first();
 
-        if ($existingApplication) {
-            return redirect()->route('onboarding.status', ['reference' => $existingApplication->reference])
-                ->with('info', 'You already have a pending application. Check status below.');
-        }
-
-        $plan = self::PLANS[$request->business_type];
-        $reference = 'APP-' . Str::uuid()->toString();
-
-        // Create onboarding application
-        $application = OnboardingApplication::create([
-            'reference' => $reference,
-            'business_name' => $request->business_name,
-            'owner_name' => $request->owner_name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'business_type' => $request->business_type,
-            'location' => $request->location,
-            'activation_fee' => $plan['activation_fee'],
-            'monthly_fee' => $plan['monthly_fee'],
-            'status' => 'pending',
-        ]);
-
-        return redirect()->route('onboarding.payment', $application)
-            ->with('success', 'Application submitted! Please complete payment to proceed.');
+    if ($existingApplication) {
+        return redirect()->route('onboarding.status', ['reference' => $existingApplication->reference])
+            ->with('info', 'You already have a pending application. Check status below.');
     }
+
+    $plan = self::PLANS[$request->business_type];
+    $reference = 'APP-' . Str::uuid()->toString();
+
+    // FOR ONBOARDING: Only charge activation fee, monthly fees will be paid later
+    $totalAmount = $plan['activation_fee']; // Only activation fee
+
+    // Create onboarding application
+    $application = OnboardingApplication::create([
+        'reference' => $reference,
+        'business_name' => $request->business_name,
+        'owner_name' => $request->owner_name,
+        'email' => $request->email,
+        'phone' => $request->phone,
+        'business_type' => $request->business_type,
+        'location' => $request->location,
+        'activation_fee' => $plan['activation_fee'],
+        'monthly_fee' => $plan['monthly_fee'],
+        'months_paid' => $request->months, // Save selected months for future reference
+        'total_amount' => $totalAmount, // Only activation fee
+        'status' => 'pending',
+    ]);
+
+    Log::info('Application created - Onboarding (Activation Fee Only)', [
+        'application_id' => $application->id,
+        'months_selected' => $request->months,
+        'activation_fee' => $plan['activation_fee'],
+        'monthly_fee' => $plan['monthly_fee'],
+        'total_charged' => $totalAmount
+    ]);
+
+    return redirect()->route('onboarding.payment', $application)
+        ->with('success', 'Application submitted! Please pay the activation fee to proceed.');
+}
 
     /**
      * Show payment page
@@ -109,18 +124,22 @@ class PublicOnboardingController extends Controller
         }
 
         $plan = self::PLANS[$application->business_type];
-        return view('public.payment', compact('application', 'plan'));
+        $monthOptions = $this->getMonthOptions();
+        return view('public.payment', compact('application', 'plan', 'monthOptions'));
     }
 
-    /**
-     * Process Pesapal payment
-     */
-    /**
+   /**
  * Process Pesapal payment
  */
-public function processPayment(OnboardingApplication $application)
+public function processPayment(Request $request, OnboardingApplication $application)
 {
+    Log::info('=== ONBOARDING PAYMENT STARTED ===', [
+        'application_id' => $application->id,
+        'application_data' => $application->toArray()
+    ]);
+
     if ($application->status === 'paid') {
+        Log::warning('Payment already completed', ['application_id' => $application->id]);
         return redirect()->route('onboarding.status', ['reference' => $application->reference])
             ->with('info', 'Payment already completed.');
     }
@@ -132,8 +151,8 @@ public function processPayment(OnboardingApplication $application)
         $orderData = [
             "id" => Str::uuid()->toString(),
             "currency" => "UGX",
-            "amount" => $application->activation_fee,
-            "description" => "Shop Activation Fee - " . $plan['name'],
+            "amount" => $application->activation_fee, // Only activation fee
+            "description" => "Shop Activation Fee - {$plan['name']} (Subscription: {$application->months_paid} months)",
             "callback_url" => route('onboarding.pesapal-callback'),
             "notification_id" => config('pesapal.notification_id'),
             "merchant_reference" => $reference,
@@ -151,10 +170,18 @@ public function processPayment(OnboardingApplication $application)
             ]
         ];
 
+        Log::info('Sending activation fee to Pesapal', [
+            'activation_fee' => $application->activation_fee,
+            'description' => $orderData['description'],
+            'future_subscription' => $application->months_paid . ' months'
+        ]);
+
         $response = $this->pesapalService->submitOrder($orderData);
         
+        Log::info('Pesapal API Response', ['response' => $response]);
+
         if (isset($response['order_tracking_id'])) {
-            // Update application with ALL payment info immediately
+            // Update application with payment info
             $application->update([
                 'pesapal_tracking_id' => $response['order_tracking_id'],
                 'payment_reference' => $reference,
@@ -167,23 +194,27 @@ public function processPayment(OnboardingApplication $application)
                 'pending_payment_reference' => $reference,
             ]);
 
-            Log::info('Payment initiated', [
+            Log::info('Activation payment initiated', [
                 'application_id' => $application->id,
                 'tracking_id' => $response['order_tracking_id'],
-                'payment_reference' => $reference
+                'amount' => $application->activation_fee,
+                'future_subscription' => $application->months_paid . ' months'
             ]);
 
             return redirect()->away($response['redirect_url']);
         }
 
-        throw new \Exception('Failed to get tracking ID from Pesapal');
+        Log::error('Pesapal response missing tracking ID', ['response' => $response]);
+        throw new \Exception('Failed to get tracking ID from Pesapal. Response: ' . json_encode($response));
 
     } catch (\Exception $e) {
-        Log::error('Pesapal Payment Error: ' . $e->getMessage());
+        Log::error('Activation Payment Error: ' . $e->getMessage(), [
+            'application_id' => $application->id,
+            'trace' => $e->getTraceAsString()
+        ]);
         return back()->with('error', 'Payment processing failed: ' . $e->getMessage());
     }
 }
-
  /**
  * Pesapal callback handler
  */
@@ -401,4 +432,30 @@ public function pesapalIPN(Request $request)
         $application = OnboardingApplication::where('reference', $reference)->firstOrFail();
         return view('public.status', compact('application'));
     }
+
+     /**
+     * Get month options for dropdown
+     */
+    private function getMonthOptions()
+    {
+        $options = [];
+        for ($i = 1; $i <= 48; $i++) {
+            $months = $i;
+            $years = floor($i / 12);
+            $remainingMonths = $i % 12;
+            
+            if ($years > 0) {
+                $label = $years . ' year' . ($years > 1 ? 's' : '');
+                if ($remainingMonths > 0) {
+                    $label .= ' ' . $remainingMonths . ' month' . ($remainingMonths > 1 ? 's' : '');
+                }
+            } else {
+                $label = $months . ' month' . ($months > 1 ? 's' : '');
+            }
+            
+            $options[$i] = $label;
+        }
+        return $options;
+    }
+
 }

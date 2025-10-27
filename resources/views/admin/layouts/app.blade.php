@@ -173,6 +173,14 @@ body {
             <i class="bi bi-list-check"></i> All Products
         </a>
 
+        <a href="{{ route('admin.subscriptions.index') }}" class="{{ request()->routeIs('admin.subscriptions.*') ? 'active' : '' }}">
+            <i class="bi bi-credit-card"></i> Subscriptions
+        </a>
+
+        <a href="{{ route('admin.subscriptions.analytics') }}" class="{{ request()->routeIs('admin.subscriptions.analytics') || request()->routeIs('admin.subscriptions.revenue') ? 'active' : '' }}">
+            <i class="bi bi-graph-up"></i> Subscription Analytics
+        </a>
+
         <a href="{{ route('admin.reports.index') }}" class="{{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
             <i class="bi bi-file-earmark-text"></i> Products Report
         </a>

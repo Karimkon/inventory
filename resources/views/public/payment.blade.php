@@ -26,7 +26,7 @@
             <!-- Header -->
             <div class="text-center mb-8">
                 <h1 class="text-3xl font-bold mb-2">💳 Complete Payment</h1>
-                <p class="text-blue-200">Activation Fee: {{ $plan['name'] }}</p>
+                <p class="text-blue-200">{{ $plan['name'] }} - {{ $application->months_paid }} months subscription</p>
                 <a href="{{ route('onboarding.show') }}" class="text-cyan-300 hover:text-cyan-100 text-sm mt-4 inline-block">
                     ← Back to Application
                 </a>
@@ -55,6 +55,10 @@
                         <div class="font-semibold">{{ $plan['name'] }}</div>
                     </div>
                     <div>
+                        <span class="text-gray-400">Duration:</span>
+                        <div class="font-semibold">{{ $application->months_paid }} months</div>
+                    </div>
+                    <div>
                         <span class="text-gray-400">Reference:</span>
                         <div class="font-semibold">{{ $application->reference }}</div>
                     </div>
@@ -63,29 +67,112 @@
 
             <!-- Payment Card -->
             <div class="bg-white/10 backdrop-blur-lg rounded-xl p-8 border border-white/20">
+                <!-- Payment Amount -->
                 <div class="text-center mb-6">
                     <div class="text-4xl font-bold text-green-400 mb-2">
                         UGX {{ number_format($application->activation_fee) }}
                     </div>
                     <div class="text-gray-300">One-time Activation Fee</div>
-                </div>
-
-                <div class="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-4 mb-6">
-                    <div class="flex items-center">
-                        <div class="text-2xl mr-3">📞</div>
-                        <div>
-                            <div class="font-bold">After Payment:</div>
-                            <div class="text-sm">Call <a href="tel:+256741613506"><strong>+256-741613506</strong></a> for activation</div>
-                        </div>
-
+                    <div class="text-sm text-blue-300 mt-2">
+                        Subscription: {{ $application->months_paid }} months - UGX {{ number_format($application->monthly_fee * $application->months_paid) }} (Payable later)
                     </div>
                 </div>
 
+                <!-- Cost Breakdown -->
+                <div class="bg-white/5 rounded-lg p-4 mb-6">
+                    <div class="space-y-3 text-sm">
+                        <!-- Activation Fee - Pay Now -->
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="font-semibold">Activation Fee</span>
+                                <div class="text-xs text-gray-400">One-time setup fee</div>
+                            </div>
+                            <span class="text-green-400 font-bold">UGX {{ number_format($application->activation_fee) }}</span>
+                        </div>
+
+                        <!-- Monthly Subscription - Future Payment -->
+                        <div class="flex justify-between items-center border-t border-white/20 pt-3">
+                            <div>
+                                <span class="font-semibold text-gray-300">Monthly Subscription</span>
+                                <div class="text-xs text-gray-400">
+                                    {{ $application->months_paid }} months × UGX {{ number_format($application->monthly_fee) }}/month
+                                </div>
+                            </div>
+                            <span class="text-gray-400">UGX {{ number_format($application->monthly_fee * $application->months_paid) }}</span>
+                        </div>
+
+                        <!-- First Payment Due -->
+                        <div class="flex justify-between items-center border-t border-white/20 pt-3">
+                            <div>
+                                <span class="font-semibold text-yellow-300">First Subscription Payment</span>
+                                <div class="text-xs text-gray-400">Due after account activation</div>
+                            </div>
+                            <span class="text-yellow-300">UGX {{ number_format($application->monthly_fee) }}</span>
+                        </div>
+
+                        <!-- Total Pay Now -->
+                        <div class="flex justify-between items-center border-t border-white/20 pt-3">
+                            <div>
+                                <span class="font-bold text-lg">Pay Now</span>
+                                <div class="text-xs text-green-400">Activation fee only</div>
+                            </div>
+                            <span class="text-green-400 font-bold text-lg">UGX {{ number_format($application->activation_fee) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Timeline -->
+                <div class="bg-blue-500/20 border border-blue-500/50 rounded-lg p-4 mb-6">
+                    <h4 class="font-bold mb-3 text-blue-300">📅 Payment Timeline</h4>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
+                            <div>
+                                <span class="font-semibold">Step 1: Activation Fee</span>
+                                <div class="text-gray-300">Pay UGX {{ number_format($application->activation_fee) }} now to activate your account</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-yellow-400 rounded-full mr-3"></div>
+                            <div>
+                                <span class="font-semibold">Step 2: Account Setup</span>
+                                <div class="text-gray-300">Call admin after payment to get your login credentials</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-blue-400 rounded-full mr-3"></div>
+                            <div>
+                                <span class="font-semibold">Step 3: Monthly Subscription</span>
+                                <div class="text-gray-300">Pay UGX {{ number_format($application->monthly_fee) }} monthly starting next month</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Important Notice -->
+                <div class="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-4 mb-6">
+                    <div class="flex items-start">
+                        <div class="text-2xl mr-3">📞</div>
+                        <div>
+                            <div class="font-bold mb-2">Important: Call After Payment</div>
+                            <div class="text-sm">
+                                After completing payment, please call our admin at 
+                                <a href="tel:+256741613506" class="underline font-semibold text-white">+256-741613506</a> 
+                                to complete your account setup and get your login credentials.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Form -->
                 <form action="{{ route('onboarding.process-payment', $application) }}" method="POST">
                     @csrf
+                    <!-- Hidden field for months -->
+                    <input type="hidden" name="months" value="{{ $application->months_paid }}">
+                    
                     <button type="submit" 
                             class="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 py-4 rounded-lg font-bold text-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center">
-                        <span>Pay with Pesapal</span>
+                        <span>Pay Activation Fee - UGX {{ number_format($application->activation_fee) }}</span>
                         <span class="ml-2">→</span>
                     </button>
                 </form>
@@ -95,7 +182,79 @@
                     <div class="text-xs text-gray-500 mt-2">Reference: {{ $application->reference }}</div>
                 </div>
             </div>
+
+            <!-- Process Info -->
+            <div class="grid md:grid-cols-3 gap-6 mt-8 text-center">
+                <div class="bg-white/5 p-4 rounded-lg">
+                    <div class="text-2xl mb-2">1️⃣</div>
+                    <h3 class="font-bold mb-2">Pay Activation</h3>
+                    <p class="text-sm text-gray-300">Pay one-time activation fee only</p>
+                </div>
+                <div class="bg-white/5 p-4 rounded-lg">
+                    <div class="text-2xl mb-2">2️⃣</div>
+                    <h3 class="font-bold mb-2">Call Admin</h3>
+                    <p class="text-sm text-gray-300">Get your login credentials</p>
+                </div>
+                <div class="bg-white/5 p-4 rounded-lg">
+                    <div class="text-2xl mb-2">3️⃣</div>
+                    <h3 class="font-bold mb-2">Start Using</h3>
+                    <p class="text-sm text-gray-300">Access all features immediately</p>
+                </div>
+            </div>
+
+            <!-- Subscription Details -->
+            <div class="bg-white/5 rounded-xl p-6 border border-white/20 mt-8">
+                <h3 class="text-xl font-bold mb-4 text-center">Your {{ $application->months_paid }}-Month Subscription Includes:</h3>
+                <div class="grid md:grid-cols-2 gap-4 text-sm">
+                    @foreach($plan['features'] as $feature)
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                        <span>{{ $feature }}</span>
+                    </div>
+                    @endforeach
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                        <span>24/7 Customer Support</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                        <span>Regular System Updates</span>
+                    </div>
+                </div>
+                
+                <!-- Monthly Fee Notice -->
+                <div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                    <div class="text-center text-sm text-blue-300">
+                        <strong>Monthly Fee:</strong> UGX {{ number_format($application->monthly_fee) }} per month 
+                        (First payment due after activation)
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <script>
+        // Add some interactive elements
+        document.addEventListener('DOMContentLoaded', function() {
+            const payButton = document.querySelector('button[type="submit"]');
+            
+            payButton.addEventListener('click', function(e) {
+                // Optional: Add confirmation for better UX
+                if (!confirm('Confirm payment of UGX {{ number_format($application->activation_fee) }} activation fee?')) {
+                    e.preventDefault();
+                }
+            });
+
+            // Add smooth scrolling for better user experience
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
 </body>
 </html>

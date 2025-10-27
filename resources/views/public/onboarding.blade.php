@@ -47,7 +47,7 @@
             <!-- Business Plans -->
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 @foreach([
-                    'retail' => ['name' => 'Retail Shop', 'price' => '2000', 'color' => 'green'],
+                    'retail' => ['name' => 'Retail Shop', 'price' => '50000', 'color' => 'green'],
                     'wholesale' => ['name' => 'Wholesale Business', 'price' => '120,000', 'color' => 'blue'],
                     'hardware' => ['name' => 'Hardware Store', 'price' => '200,000', 'color' => 'orange'],
                     'supermarket' => ['name' => 'Supermarket', 'price' => '500,000', 'color' => 'purple']
@@ -86,14 +86,26 @@
                             
                             <div>
                                 <label class="block text-sm font-medium mb-2">Business Type *</label>
-                                <select name="business_type" required 
-                                        class="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-400">
-                                    <option value="">Select Business Type</option>
-                                    <option value="retail">Retail Shop (UGX 2,000)</option>
-                                    <option value="wholesale">Wholesale Business (UGX 120,000)</option>
-                                    <option value="hardware">Hardware Store (UGX 200,000)</option>
-                                    <option value="supermarket">Supermarket (UGX 500,000)</option>
-                                </select>
+                                <div class="relative">
+  <select name="business_type" required
+    class="w-full px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg 
+           text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 
+           focus:border-cyan-400 appearance-none cursor-pointer">
+      <option value="">Select Business Type</option>
+      <option value="retail" class="text-gray-900">Retail Shop (UGX 50,000)</option>
+      <option value="wholesale" class="text-gray-900">Wholesale Business (UGX 120,000)</option>
+      <option value="hardware" class="text-gray-900">Hardware Store (UGX 200,000)</option>
+      <option value="supermarket" class="text-gray-900">Supermarket (UGX 500,000)</option>
+  </select>
+
+  <!-- Arrow icon -->
+  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-cyan-300">
+    ▼
+  </div>
+</div>
+
+
+
                             </div>
                             
                             <div>
@@ -128,6 +140,32 @@
                             </div>
                         </div>
                     </div>
+<br>
+                    <!-- Add this to your onboarding form -->
+                         <label class="block text-sm font-medium mb-2">Subscription Period *</label>
+
+<div>
+    <div class="relative">
+  <select name="months" required
+    class="w-full px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg 
+           text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 
+           focus:border-cyan-400 appearance-none cursor-pointer">
+      <option value="">Select Duration</option>
+      @foreach($monthOptions as $value => $label)
+          <option value="{{ $value }}" class="text-gray-900">{{ $label }}</option>
+      @endforeach
+  </select>
+
+  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-cyan-300">
+    ▼
+  </div>
+</div>
+
+<p class="text-sm text-gray-300 mt-1">
+  Choose how many months to pay for (1–48 months)
+</p>
+
+</div>
 
                     <div class="mt-8 text-center">
                         <button type="submit" 

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon; // ADD THIS IMPORT
 
 class Subscription extends Model
 {
@@ -14,6 +15,8 @@ class Subscription extends Model
         'plan_type',
         'activation_fee',
         'monthly_fee',
+        'months',
+        'total_amount', // ADD THIS - it's in casts but not fillable
         'is_active',
         'payment_status',
         'pesapal_tracking_id',
@@ -26,11 +29,45 @@ class Subscription extends Model
     protected $casts = [
         'activation_fee' => 'decimal:2',
         'monthly_fee' => 'decimal:2',
+        'total_amount' => 'decimal:2',
         'is_active' => 'boolean',
         'activated_at' => 'datetime',
         'expires_at' => 'datetime',
     ];
 
+    /**
+     * Check if subscription is expired
+     */
+    public function getIsExpiredAttribute()
+    {
+        return $this->expires_at && $this->expires_at->isPast();
+    }
+
+    /**
+     * Check if subscription is active
+     */
+    public function getIsActiveAttribute($value)
+    {
+        return $value && !$this->is_expired;
+    }
+
+    /**
+     * Get remaining days
+     */
+    public function getRemainingDaysAttribute()
+    {
+        if (!$this->expires_at) return 0;
+        return max(0, Carbon::now()->diffInDays($this->expires_at, false));
+    }
+
+    /**
+     * Calculate total amount for multiple months
+     */
+    public static function calculateTotalAmount($monthlyFee, $months, $activationFee = 0)
+    {
+        return ($monthlyFee * $months) + $activationFee;
+    }
+    
     /**
      * Get the shop that owns the subscription.
      */
@@ -47,7 +84,7 @@ class Subscription extends Model
         $plans = [
             'retail' => [
                 'name' => 'Retail Shop',
-                'activation_fee' => 2000,
+                'activation_fee' => 50000,
                 'monthly_fee' => 15000,
                 'features' => ['Basic Inventory', 'Sales Tracking', 'Basic Reports']
             ],

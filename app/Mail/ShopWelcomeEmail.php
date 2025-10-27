@@ -9,7 +9,7 @@ use Illuminate\Queue\SerializesModels;
 use App\Models\Shop;
 use App\Models\User;
 
-class ShopWelcomeEmail extends Mailable implements ShouldQueue
+class ShopWelcomeEmail extends Mailable
 {
     use Queueable, SerializesModels;
 
