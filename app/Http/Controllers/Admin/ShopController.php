@@ -49,7 +49,7 @@ class ShopController extends Controller
             'name' => 'required|string|max:255|unique:shops',
             'slug' => 'required|string|max:255|unique:shops',
             'admin_name' => 'required|string|max:255',
-            'admin_email' => 'required|email|unique:users,email',
+            'admin_email' => 'required|email|unique:users',
             'admin_password' => 'required|min:8',
         ]);
 
@@ -169,12 +169,18 @@ class ShopController extends Controller
         return view('admin.shops.onboarding-application-show', compact('application'));
     }
 
-
 /**
  * Approve onboarding application and create shop
  */
 public function approveApplication(Request $request, OnboardingApplication $application)
 {
+    \Log::info('=== APPROVE APPLICATION STARTED ===', [
+        'application_id' => $application->id,
+        'business_name' => $application->business_name,
+        'status' => $application->status,
+        'admin_email' => $request->admin_email
+    ]);
+
     $request->validate([
         'admin_email' => 'required|email|unique:users,email',
         'admin_password' => 'required|min:8',
@@ -190,106 +196,133 @@ public function approveApplication(Request $request, OnboardingApplication $appl
         return back()->with('error', 'Cannot approve application that hasn\'t been paid.');
     }
 
-    $adminPassword = $request->admin_password;
-
-    // Generate random PIN
-    $randomPin = \App\Models\Shop::generateRandomPin();
-
-    // FIX: Pass $randomPin to the transaction closure
-    $result = \DB::transaction(function() use ($application, $request, $adminPassword, $randomPin) {
-        // Generate shop slug from business name
-        $slug = Str::slug($application->business_name);
-        $counter = 1;
-        $originalSlug = $slug;
-        
-        // Ensure slug is unique
-        while (Shop::where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '-' . $counter;
-            $counter++;
-        }
-
-        // Create the shop
-        $shop = Shop::create([
-            'name' => $application->business_name,
-            'slug' => $slug,
-            'business_type' => $application->business_type,
-            'subscription_status' => 'active',
-            'activated_at' => now(),
-            'pos_pin' => $randomPin, // Now $randomPin is available
-        ]);
-
-        // Create admin user for this shop
-        $user = User::create([
-            'name' => $application->owner_name,
-            'email' => $request->admin_email,
-            'password' => Hash::make($adminPassword),
-            'shop_id' => $shop->id,
-            'role' => 'shop',
-        ]);
-
-        // Create subscription for the shop
-        $subscription = Subscription::create([
-            'shop_id' => $shop->id,
-            'plan_type' => $application->business_type,
-            'activation_fee' => $application->activation_fee,
-            'monthly_fee' => $application->monthly_fee,
-            'is_active' => true,
-            'payment_status' => 'paid',
-            'activated_at' => now(),
-            'expires_at' => now()->addMonth(),
-        ]);
-
-        // Update application status
-        $application->update([
-            'status' => 'approved',
-            'admin_notes' => "Approved and shop created on " . now()->format('Y-m-d H:i') . 
-                           ". Shop: {$shop->name}, User: {$request->admin_email}, POS PIN: $randomPin",
-        ]);
-
-        // Return the created objects
-        return [
-            'shop' => $shop,
-            'user' => $user,
-            'pin' => $randomPin,
-        ];
-    });
-
-    // Extract shop and user from result
-    $shop = $result['shop'];
-    $user = $result['user'];
-    $pin = $result['pin'];
-
-    // Send welcome email outside transaction to avoid issues
-    try {
-        \Log::info('Attempting to send welcome email', [
-            'to' => $user->email,
-            'shop' => $shop->name
-        ]);
-
-        // FIX: Pass the PIN to the email
-        Mail::to($user->email)->send(new ShopWelcomeEmail($shop, $user, $adminPassword, $randomPin));
-
-        
-        \Log::info('Welcome email sent successfully', [
-            'shop_id' => $shop->id,
-            'user_email' => $user->email,
-            'application_id' => $application->id
-        ]);
-
-        $emailMessage = 'Welcome email sent to ' . $user->email;
-
-    } catch (\Exception $e) {
-        \Log::error('Failed to send welcome email: ' . $e->getMessage(), [
-            'shop_id' => $shop->id,
-            'user_email' => $user->email,
-            'error' => $e->getMessage()
-        ]);
-        
-        $emailMessage = 'Welcome email failed to send: ' . $e->getMessage();
+    // Check for existing shop with same name
+    $existingShop = Shop::where('name', $application->business_name)->first();
+    if ($existingShop) {
+        return back()->with('error', 'A shop with the business name "' . $application->business_name . '" already exists.');
     }
 
-    return redirect()->route('admin.shops.onboarding-applications')
-        ->with('success', "Application approved successfully! Shop and admin user created. POS PIN: $pin. " . $emailMessage);
+    // Check if user email already exists
+    $existingUser = User::where('email', $request->admin_email)->first();
+    if ($existingUser) {
+        return back()->with('error', 'The admin email is already taken. Please use a different email.');
+    }
+
+    $adminPassword = $request->admin_password;
+    $randomPin = \App\Models\Shop::generateRandomPin();
+
+    \Log::info('Generated PIN for application', [
+        'application_id' => $application->id,
+        'pin' => $randomPin
+    ]);
+
+    try {
+        $result = \DB::transaction(function() use ($application, $request, $adminPassword, $randomPin) {
+            // Generate shop slug from business name
+            $slug = Str::slug($application->business_name);
+            $counter = 1;
+            $originalSlug = $slug;
+            
+            // Ensure slug is unique
+            while (Shop::where('slug', $slug)->exists()) {
+                $slug = $originalSlug . '-' . $counter;
+                $counter++;
+            }
+
+            // Create the shop
+            $shop = Shop::create([
+                'name' => $application->business_name,
+                'slug' => $slug,
+                'business_type' => $application->business_type,
+                'subscription_status' => 'active',
+                'activated_at' => now(),
+                'pos_pin' => $randomPin,
+            ]);
+
+            \Log::info('Shop created', [
+                'shop_id' => $shop->id,
+                'shop_name' => $shop->name,
+                'pin' => $randomPin
+            ]);
+
+            // Create admin user for this shop
+            $user = User::create([
+                'name' => $application->owner_name,
+                'email' => $request->admin_email,
+                'password' => Hash::make($adminPassword),
+                'shop_id' => $shop->id,
+                'role' => 'shop',
+            ]);
+
+            // Create subscription for the shop
+            $subscription = Subscription::create([
+                'shop_id' => $shop->id,
+                'plan_type' => $application->business_type,
+                'activation_fee' => $application->activation_fee,
+                'monthly_fee' => $application->monthly_fee,
+                'is_active' => true,
+                'payment_status' => 'paid',
+                'activated_at' => now(),
+                'expires_at' => now()->addMonth(),
+            ]);
+
+            // Update application status
+            $application->update([
+                'status' => 'approved',
+                'admin_notes' => "Approved and shop created on " . now()->format('Y-m-d H:i') . 
+                               ". Shop: {$shop->name}, User: {$request->admin_email}, POS PIN: $randomPin",
+            ]);
+
+            return [
+                'shop' => $shop,
+                'user' => $user,
+                'pin' => $randomPin,
+            ];
+        });
+
+        \Log::info('Database transaction completed', [
+            'application_id' => $application->id,
+            'pin' => $result['pin']
+        ]);
+
+        // Send welcome email (outside transaction)
+        $emailMessage = '';
+        try {
+            Mail::to($result['user']->email)->send(new ShopWelcomeEmail(
+                $result['shop'], 
+                $result['user'], 
+                $adminPassword, 
+                $result['pin']
+            ));
+            $emailMessage = 'Welcome email sent to ' . $result['user']->email;
+            \Log::info('Email sent successfully', ['email' => $result['user']->email]);
+        } catch (\Exception $e) {
+            $emailMessage = 'Welcome email failed to send: ' . $e->getMessage();
+            \Log::error('Email sending failed', ['error' => $e->getMessage()]);
+        }
+
+        // SUCCESS - Redirect with pin in session (not just flash)
+        session()->flash('success', "Application approved successfully! Shop and admin user created. POS PIN: {$result['pin']}. " . $emailMessage);
+        
+        // Also store in session for backup
+        session(['last_approved_pin' => $result['pin']]);
+        
+        \Log::info('=== APPROVE APPLICATION COMPLETED SUCCESSFULLY ===', [
+            'application_id' => $application->id,
+            'pin' => $result['pin']
+        ]);
+
+        return redirect()->route('admin.shops.onboarding-applications');
+
+    } catch (\Exception $e) {
+        \Log::error('=== APPROVE APPLICATION FAILED ===', [
+            'application_id' => $application->id,
+            'error_message' => $e->getMessage(),
+            'error_trace' => $e->getTraceAsString()
+        ]);
+
+        return back()->with('error', 'Failed to approve application: ' . $e->getMessage());
+    }
 }
     /**
      * Reject onboarding application

@@ -21,7 +21,7 @@ class PublicOnboardingController extends Controller
     const PLANS = [
         'retail' => [
             'name' => 'Retail Shop',
-            'activation_fee' => 50000,
+            'activation_fee' => 2000,
             'monthly_fee' => 15000,
             'features' => ['Basic Inventory', 'Sales Tracking', 'Basic Reports']
         ],

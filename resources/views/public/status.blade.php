@@ -102,7 +102,7 @@
                                 <div>
                                     <div class="font-bold">Next Step: Call for Activation</div>
                                     <div class="text-sm mt-1">
-                                        Please call our admin at <strong>+256-707208954</strong> to complete your account setup.
+                                        Please call our admin at <strong>+256-741613506</strong> to complete your account setup.
                                         Your reference number is: <code class="bg-black/30 px-2 py-1 rounded">{{ $application->reference }}</code>
                                     </div>
                                 </div>

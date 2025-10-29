@@ -163,9 +163,9 @@
                     <h3 class="font-semibold mb-3 text-xl">Need Assistance?</h3>
                     <p class="text-sm text-gray-300">Reach out to our support team:</p>
                     <div class="flex flex-col mt-2">
-                        <span class="text-sm text-gray-200">Phone: <a href="tel:+256707208954" class="text-blue-400">+256-707208954</a></span>
-                        <span class="text-sm text-gray-200">Alt: <a href="tel:+256788135150" class="text-blue-400">+256-788135150</a></span>
-                        <span class="text-xs text-gray-400 mt-1">Email: <a href="mailto:redvers@gmail.com" class="text-blue-400">redvers@gmail.com</a></span>
+                        <span class="text-sm text-gray-200">Phone: <a href="tel:+256741613506" class="text-blue-400">+256-741613506</a></span>
+                        <span class="text-sm text-gray-200">Alt: <a href="tel:+256707208954" class="text-blue-400">+256-707208954</a></span>
+                        <span class="text-xs text-gray-400 mt-1">Email: <a href="mailto:redversemobility@gmail.com" class="text-blue-400">redvers@gmail.com</a></span>
                     </div>
                 </div>
             </div>

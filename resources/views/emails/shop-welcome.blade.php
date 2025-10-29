@@ -29,8 +29,12 @@
                 <h3>🔐 Your Login Credentials:</h3>
                 <p><strong>Email:</strong> {{ $user->email }}</p>
                 <p><strong>Password:</strong> {{ $password }}</p>
+                
+                <p><strong>Shop Login URL:</strong> <a href="{{ url('/shop/login') }}">{{ url('/shop/login') }}</a></p>
+
+                <p><strong>POS Login URL:</strong> <a href="{{ url('https://redversshopflow.shop/') }}">{{ url('/shop/login') }}</a></p>
+
                 <p><strong>POS Access PIN:</strong> <code>{{ $pin }}</code></p>
-                <p><strong>Login URL:</strong> <a href="{{ url('/shop/login') }}">{{ url('/shop/login') }}</a></p>
             </div>
 
             <p><strong>Important Security Notes:</strong></p>
@@ -52,7 +56,7 @@
 
             <p>If you have any questions or need assistance, please contact our support team:</p>
             <p>📞 Phone: +256-707208954 or +256-741613506<br>
-               ✉️ Email: redvers@gmail.com</p>
+               ✉️ Email: redversemobility@gmail.com</p>
         </div>
         
         <div class="footer">
