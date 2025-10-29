@@ -29,6 +29,18 @@ Route::prefix('pos')->name('pos.')->group(function () {
     Route::get('/receipt/{product}/{qty}', [PosController::class, 'receipt'])->name('receipt');
     Route::post('/expenses', [PosController::class, 'storeExpense'])->name('expenses.store');
     Route::post('/logout', [PosController::class, 'logout'])->name('logout');
+
+
+    Route::prefix('cart')->name('cart.')->group(function () {
+    Route::post('{productId}/add', [PosController::class, 'addToCart'])->name('add');
+    Route::put('{productId}/update', [PosController::class, 'updateCart'])->name('update');
+    Route::delete('{productId}/remove', [PosController::class, 'removeFromCart'])->name('remove');
+    Route::post('clear', [PosController::class, 'clearCart'])->name('clear');
+    Route::post('checkout', [PosController::class, 'checkout'])->name('checkout');
+    Route::get('data', [PosController::class, 'getCartData'])->name('data');
+    Route::get('receipt', [PosController::class, 'unifiedReceipt'])->name('receipt');
+});
+
 });
 
 // ----------------------
@@ -167,25 +179,42 @@ Route::prefix('subscriptions')->name('subscriptions.')->group(function () {
 // ----------------------
 // Shop Protected Routes (Shop-specific operations)
 // ----------------------
+
+// ----------------------
+// Shop Protected Routes (Shop-specific operations)
+// ----------------------
 Route::middleware(['auth','role:shop'])->prefix('shop')->name('shop.')->group(function(){
 
     // Dashboard (Shop-specific)
     Route::get('/dashboard', [ShopDashboardController::class,'index'])->name('dashboard');
+    
+    // Loans
     Route::resource('loans', \App\Http\Controllers\Shop\LoanController::class); 
     Route::post('/loans/{loan}/record-payment', [\App\Http\Controllers\Shop\LoanController::class, 'recordPayment'])
-    ->name('loans.record-payment');
+        ->name('loans.record-payment');
 
-     Route::prefix('products')->name('products.')->group(function () {
+    // Products routes
+    Route::prefix('products')->name('products.')->group(function () {
         Route::get('/', [ShopProductController::class,'index'])->name('index');
         Route::get('/create', [ShopProductController::class,'create'])->name('create');
-        Route::post('/store', [ShopProductController::class,'store'])->name('store');
-        Route::get('/{product}/edit', [ShopProductController::class,'edit'])->name('edit'); // NEW
-        Route::put('/{product}', [ShopProductController::class,'update'])->name('update'); // NEW
-        Route::post('/{product}/update-stock', [ShopProductController::class,'updateStock'])->name('update-stock'); // NEW
-        Route::post('/sell/{product}', [ShopProductController::class,'sell'])->name('sell');
+        Route::post('/', [ShopProductController::class,'store'])->name('store');
+        Route::get('/{product}/edit', [ShopProductController::class,'edit'])->name('edit');
+        Route::put('/{product}', [ShopProductController::class,'update'])->name('update');
+        Route::post('/{product}/update-stock', [ShopProductController::class,'updateStock'])->name('update-stock');
+        Route::post('/{product}/sell', [ShopProductController::class,'sell'])->name('sell');
         Route::get('/receipt/{product}/{qty}', [ShopProductController::class,'receipt'])->name('receipt');
-        Route::get('/unified-receipt', [ShopProductController::class,'unifiedReceipt'])->name('unified-receipt'); // NEW
     });
+
+    // Cart routes - OUTSIDE products prefix
+    Route::post('/cart/{productId}/add', [ShopProductController::class, 'addToCart'])->name('cart.add');
+    Route::put('/cart/{productId}/update', [ShopProductController::class, 'updateCart'])->name('cart.update');
+    Route::delete('/cart/{productId}/remove', [ShopProductController::class, 'removeFromCart'])->name('cart.remove');
+    Route::post('/cart/clear', [ShopProductController::class, 'clearCart'])->name('cart.clear');
+    Route::post('/cart/checkout', [ShopProductController::class, 'checkout'])->name('cart.checkout');
+    Route::get('/cart/data', [ShopProductController::class, 'getCartData'])->name('cart.data');
+
+    // Unified receipt route
+    Route::get('/receipt/unified', [ShopProductController::class, 'unifiedReceipt'])->name('receipt.unified');
 
     // Shop Expenses
     Route::resource('expenses', \App\Http\Controllers\Shop\ExpenseController::class);
@@ -201,6 +230,7 @@ Route::middleware(['auth','role:shop'])->prefix('shop')->name('shop.')->group(fu
         Route::get('/balance-sheet', [\App\Http\Controllers\Shop\ReportController::class, 'balanceSheet'])->name('balance-sheet');
     });
 
+    // Depreciation
     Route::prefix('depreciation')->name('depreciation.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Shop\DepreciationController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Shop\DepreciationController::class, 'create'])->name('create');
@@ -212,7 +242,7 @@ Route::middleware(['auth','role:shop'])->prefix('shop')->name('shop.')->group(fu
         Route::post('/recalculate-values', [\App\Http\Controllers\Shop\DepreciationController::class, 'recalculateValues'])->name('recalculate-values');
     });
 
-     // Subscription Renewal Routes
+    // Subscription Renewal Routes
     Route::prefix('subscription')->name('subscription.')->group(function () {
         Route::get('/renew', [\App\Http\Controllers\Shop\SubscriptionController::class, 'showRenewal'])->name('renew');
         Route::post('/renew', [\App\Http\Controllers\Shop\SubscriptionController::class, 'processRenewal'])->name('process-renewal');

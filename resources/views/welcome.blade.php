@@ -416,48 +416,23 @@
         <h4 class="role-title">POS Terminal</h4>
         <p class="role-description">Secure access for shop employees</p>
         
-        <!-- POS Login Form -->
-        <form action="{{ route('pos.login.submit') }}" method="POST" class="mt-3">
-            @csrf
-            <div style="margin-bottom: 1rem;">
-                <input type="text" 
-                       name="shop_identifier" 
-                       class="form-control" 
-                       placeholder="Enter Shop ID or Name" 
-                       required
-                       style="width: 100%; 
-                              padding: 0.75rem; 
-                              border: 1px solid rgba(148, 163, 184, 0.3); 
-                              border-radius: 12px; 
-                              background: rgba(30, 41, 59, 0.8); 
-                              color: white;
-                              font-size: 0.95rem;
-                              margin-bottom: 1rem;">
-            </div>
-            
-            <div style="margin-bottom: 1rem;">
-                <input type="password" 
-                       name="pos_pin" 
-                       class="form-control" 
-                       placeholder="Enter POS PIN" 
-                       maxlength="4"
-                       required
-                       style="width: 100%; 
-                              padding: 0.75rem; 
-                              border: 1px solid rgba(148, 163, 184, 0.3); 
-                              border-radius: 12px; 
-                              background: rgba(30, 41, 59, 0.8); 
-                              color: white;
-                              font-size: 0.95rem;">
-                @error('pos_pin')
-                    <small style="color: #ef4444; display: block; margin-top: 0.5rem;">{{ $message }}</small>
-                @enderror
-            </div>
-            
-            <button type="submit" class="role-button" style="border: none; cursor: pointer;">
-                🔐 Access POS Terminal
-            </button>
-        </form>
+    <form action="{{ route('pos.login.submit') }}" method="POST" class="mt-3" autocomplete="off">
+        @csrf
+        <!-- Hidden dummy fields to block autofill -->
+        <input type="text" style="display:none">
+        <input type="password" style="display:none">
+
+        <!-- Real input fields with unique names -->
+        <input type="text" name="shop_identifier" placeholder="Enter Shop ID or Name" 
+       class="form-control" autocomplete="new-password" required>
+
+<input type="password" name="pos_pin" placeholder="Enter POS PIN" maxlength="4" 
+       class="form-control" autocomplete="new-password" required>
+
+
+        <button type="submit" class="role-button">🔐 Access POS Terminal</button>
+    </form>
+
     </div>
 </div> 
             <div class="footer">

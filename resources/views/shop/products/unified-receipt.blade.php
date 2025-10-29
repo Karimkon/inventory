@@ -7,114 +7,139 @@
         body {
             font-family: 'Courier New', Courier, monospace;
             font-size: 12px;
-            width: 280px; /* thermal printer width */
-            margin: 0;
-            padding: 0;
+            width: 280px;
+            margin: 0 auto;
+            padding: 10px;
         }
         .header, .footer {
             text-align: center;
         }
         .header h2 {
             margin: 0;
-            font-size: 14px;
+            font-size: 16px;
+            font-weight: bold;
         }
         .header p {
-            margin: 2px 0 5px 0;
+            margin: 2px 0;
+            font-size: 11px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 5px;
         }
-        th, td {
-            padding: 2px 0;
+        th {
             text-align: left;
-        }
-        .item-row td {
-            border-bottom: 1px dotted #ccc;
             padding: 3px 0;
+            border-bottom: 1px solid #000;
+            font-size: 11px;
+        }
+        td {
+            padding: 2px 0;
+            font-size: 11px;
         }
         .totals td {
             border-top: 1px dashed #000;
             font-weight: bold;
-            padding: 4px 0;
+            padding: 5px 0;
         }
         .separator {
             border-top: 1px dashed #000;
-            margin: 5px 0;
+            margin: 8px 0;
         }
         .shop-info {
             font-size: 10px;
             color: #666;
         }
-        .item-name {
-            max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        .item-row td {
+            padding: 3px 0;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .grand-total {
+            font-size: 13px;
+            font-weight: bold;
+        }
+        @media print {
+            body {
+                width: 280px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h2>{{ Auth::user()->shop->name ?? 'My Shop' }}</h2>
-        <p>Sales Receipt</p>
-        <p>{{ now()->format('Y-m-d H:i') }}</p>
+        <h2>{{ Auth::user()->shop->name ?? 'MY SHOP' }}</h2>
+        <p>SALES RECEIPT</p>
+        <p>{{ $soldAt }}</p>
+        <p style="font-size: 10px;">Receipt #{{ substr(md5($soldAt), 0, 8) }}</p>
     </div>
 
     <div class="separator"></div>
 
     <table>
-        <tr>
-            <th>Item</th>
-            <th>Qty</th>
-            <th>Price</th>
-            <th>Total</th>
-        </tr>
-        @foreach($saleItems as $item)
-        <tr class="item-row">
-            <td class="item-name" title="{{ $item['product_name'] }}">{{ $item['product_name'] }}</td>
-            <td>{{ $item['quantity'] }}</td>
-            <td>{{ number_format($item['unit_price'], 2) }}</td>
-            <td>{{ number_format($item['total'], 2) }}</td>
-        </tr>
-        @endforeach
+        <thead>
+            <tr>
+                <th style="width: 45%;">Item</th>
+                <th style="width: 15%;">Qty</th>
+                <th style="width: 20%;" class="text-right">Price</th>
+                <th style="width: 20%;" class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($saleItems as $item)
+            <tr class="item-row">
+                <td>{{ $item['product_name'] }}</td>
+                <td>{{ $item['quantity'] }}</td>
+                <td class="text-right">{{ number_format($item['price'], 0) }}</td>
+                <td class="text-right">{{ number_format($item['total'], 0) }}</td>
+            </tr>
+            @endforeach
+        </tbody>
     </table>
 
     <div class="separator"></div>
 
     <table class="totals">
         <tr>
-            <td>Subtotal:</td>
-            <td>UGX {{ number_format($totalAmount, 2) }}</td>
+            <td>SUBTOTAL:</td>
+            <td class="text-right">UGX {{ number_format($totalAmount, 0) }}</td>
         </tr>
-        <tr>
-            <td>Total Items:</td>
-            <td>{{ count($saleItems) }}</td>
+        @if($totalProfit > 0)
+        <tr style="font-size: 10px; font-weight: normal;">
+            <td>Profit Margin:</td>
+            <td class="text-right">UGX {{ number_format($totalProfit, 0) }}</td>
         </tr>
-        <tr>
-            <td>Total Profit:</td>
-            <td>UGX {{ number_format($totalProfit, 2) }}</td>
-        </tr>
-        <tr>
-            <td><strong>Grand Total:</strong></td>
-            <td><strong>UGX {{ number_format($totalAmount, 2) }}</strong></td>
+        @endif
+        <tr class="grand-total">
+            <td>TOTAL:</td>
+            <td class="text-right">UGX {{ number_format($totalAmount, 0) }}</td>
         </tr>
     </table>
 
     <div class="separator"></div>
 
     <div class="footer">
-        <p>Thank you for your purchase!</p>
+        <p style="margin: 10px 0;">Thank you for your purchase!</p>
         <p class="shop-info">{{ Auth::user()->shop->name ?? 'My Shop' }}</p>
-        <p class="shop-info">Receipt ID: {{ strtoupper(uniqid()) }}</p>
+        @if(Auth::user()->shop->phone ?? false)
+        <p class="shop-info">Tel: {{ Auth::user()->shop->phone }}</p>
+        @endif
+        <p class="shop-info" style="margin-top: 10px; font-size: 9px;">
+            Served by: {{ Auth::user()->name }}
+        </p>
     </div>
 
     <script>
-        // Auto-print if needed
+        // Auto-print when page loads
         window.onload = function() {
-            // Uncomment below to auto-print
-            // window.print();
+            window.print();
+            
+            // Close window after printing (optional)
+            // window.onafterprint = function() {
+            //     window.close();
+            // };
         };
     </script>
 </body>
