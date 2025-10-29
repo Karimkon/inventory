@@ -478,4 +478,6 @@ class ProductController extends Controller
         
         return view('shop.products.receipt', compact('product', 'qty', 'total'));
     }
+
+    
 }

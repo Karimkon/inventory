@@ -106,12 +106,6 @@
             <td>SUBTOTAL:</td>
             <td class="text-right">UGX {{ number_format($totalAmount, 0) }}</td>
         </tr>
-        @if($totalProfit > 0)
-        <tr style="font-size: 10px; font-weight: normal;">
-            <td>Profit Margin:</td>
-            <td class="text-right">UGX {{ number_format($totalProfit, 0) }}</td>
-        </tr>
-        @endif
         <tr class="grand-total">
             <td>TOTAL:</td>
             <td class="text-right">UGX {{ number_format($totalAmount, 0) }}</td>

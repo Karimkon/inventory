@@ -131,7 +131,8 @@ function quickSell(productId, quantity = 1) {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         },
         body: JSON.stringify({ quantity: quantity })
     })
@@ -139,6 +140,10 @@ function quickSell(productId, quantity = 1) {
     .then(data => {
         if (data.success) {
             showToast('Sale completed!', 'success');
+
+            // Open unified receipt in new tab
+  window.open(data.receipt_url, '_blank');
+
             setTimeout(() => location.reload(), 1000);
         } else {
             showToast(data.error || 'Error completing sale', 'danger');

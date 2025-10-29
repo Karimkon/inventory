@@ -120,6 +120,9 @@ function updateStock(action) {
     if (action === 'add') {
         stockInput = document.getElementById('add_stock');
         stockValue = parseInt(stockInput.value);
+        if (action === 'add') {
+            stockValue = parseInt(document.getElementById('stock').value) + stockValue;
+        }
     } else {
         stockInput = document.getElementById('set_stock');
         stockValue = parseInt(stockInput.value);
@@ -130,48 +133,15 @@ function updateStock(action) {
         return;
     }
 
-    // Show loading
-    const btn = event.target;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Updating...';
-    btn.disabled = true;
-
-    // Send AJAX request
-    fetch(`/shop/products/{{ $product->id }}/update-stock`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({
-            stock: stockValue,
-            action: action
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Update display
-            document.getElementById('current_stock_display').textContent = data.new_stock;
-            document.getElementById('stock').value = data.new_stock;
-            document.getElementById('set_stock').value = data.new_stock;
-            document.getElementById('add_stock').value = 0;
-            
-            // Show success message
-            showAlert('Stock updated successfully!', 'success');
-        } else {
-            showAlert(data.error || 'Failed to update stock', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('An error occurred while updating stock', 'error');
-    })
-    .finally(() => {
-        // Restore button
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    });
+    // Update the stock field and submit the form
+    document.getElementById('stock').value = stockValue;
+    document.getElementById('set_stock').value = stockValue;
+    document.getElementById('add_stock').value = 0;
+    
+    // Update display immediately
+    document.getElementById('current_stock_display').textContent = stockValue;
+    
+    showAlert('Stock updated locally. Remember to click "Update Product" to save changes.', 'success');
 }
 
 function showAlert(message, type) {

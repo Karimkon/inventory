@@ -79,18 +79,18 @@ class PosController extends Controller
     /**
      * Quick Sell product
      */
-    public function sell(Request $request, Product $product)
-    {
-        $this->checkShopAccess($product->shop_id);
+   public function sell(Request $request, Product $product)
+{
+    $this->checkShopAccess($product->shop_id);
 
-        $request->validate([
-            'quantity' => "required|integer|min:1|max:{$product->stock}",
-        ]);
+    $request->validate([
+        'quantity' => "required|integer|min:1|max:{$product->stock}",
+    ]);
 
-        $quantity = $request->quantity;
+    $quantity = $request->quantity;
 
-        // Record sale
-        Sale::create([
+    try {
+        $sale = Sale::create([
             'product_id' => $product->id,
             'shop_id' => $product->shop_id,
             'quantity' => $quantity,
@@ -100,8 +100,34 @@ class PosController extends Controller
 
         $product->decrement('stock', $quantity);
 
-        return back()->with('success', "Sold {$quantity} × {$product->name} for UGX " . number_format($product->price * $quantity));
+        // Save session for receipt
+        Session::put('pos_last_sale', [
+            'items' => [[
+                'product_name' => $product->name,
+                'quantity' => $quantity,
+                'price' => $product->price,
+                'total' => $product->price * $quantity,
+            ]],
+            'total_amount' => $product->price * $quantity,
+            'sold_at' => now()->format('Y-m-d H:i:s'),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Sold {$quantity} × {$product->name}",
+            'total' => $product->price * $quantity,
+            'receipt_url' => route('pos.cart.receipt') // <-- URL for printing
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 422);
     }
+}
+
+
 
     /**
      * POS Receipt
