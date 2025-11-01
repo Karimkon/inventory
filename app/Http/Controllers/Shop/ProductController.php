@@ -479,5 +479,79 @@ class ProductController extends Controller
         return view('shop.products.receipt', compact('product', 'qty', 'total'));
     }
 
+    // Add this method to ProductController
+public function salesHistory(Request $request)
+{
+    $shopId = Auth::user()->shop_id;
+    
+    // Get filter parameters
+    $date = $request->query('date', now()->format('Y-m-d'));
+    $productId = $request->query('product_id');
+    $timeRange = $request->query('time_range', 'today'); // today, week, month, custom
+    
+    // Base query
+    $salesQuery = Sale::with('product')
+        ->where('shop_id', $shopId)
+        ->orderBy('created_at', 'desc');
+    
+    // Apply date filters
+    if ($timeRange === 'today') {
+        $salesQuery->whereDate('created_at', $date);
+    } elseif ($timeRange === 'week') {
+        $salesQuery->whereBetween('created_at', [
+            now()->startOfWeek(),
+            now()->endOfWeek()
+        ]);
+    } elseif ($timeRange === 'month') {
+        $salesQuery->whereMonth('created_at', now()->month)
+                  ->whereYear('created_at', now()->year);
+    } elseif ($timeRange === 'custom' && $date) {
+        $salesQuery->whereDate('created_at', $date);
+    }
+    
+    // Filter by specific product
+    if ($productId) {
+        $salesQuery->where('product_id', $productId);
+    }
+    
+    $sales = $salesQuery->paginate(20);
+    
+    // Get summary statistics
+    $totalSales = $salesQuery->count();
+    $totalQuantity = $salesQuery->sum('quantity');
+    $totalRevenue = $salesQuery->sum(DB::raw('sold_price * quantity'));
+    $totalProfit = $salesQuery->sum(DB::raw('(sold_price - cost_price) * quantity'));
+    
+    // Get products for filter dropdown
+    $products = Product::where('shop_id', $shopId)->get();
+    
+    // Group sales by product for summary
+    $salesByProduct = $salesQuery->get()->groupBy('product_id')->map(function ($productSales) {
+        return [
+            'product_name' => $productSales->first()->product->name,
+            'total_quantity' => $productSales->sum('quantity'),
+            'total_revenue' => $productSales->sum(function ($sale) {
+                return $sale->sold_price * $sale->quantity;
+            }),
+            'total_profit' => $productSales->sum(function ($sale) {
+                return ($sale->sold_price - $sale->cost_price) * $sale->quantity;
+            }),
+            'sales_count' => $productSales->count()
+        ];
+    });
+    
+    return view('shop.products.sales-history', compact(
+        'sales',
+        'totalSales',
+        'totalQuantity',
+        'totalRevenue',
+        'totalProfit',
+        'products',
+        'salesByProduct',
+        'date',
+        'productId',
+        'timeRange'
+    ));
+}   
     
 }

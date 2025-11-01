@@ -226,6 +226,10 @@ body {
             <i class="bi bi-box-seam"></i>Sell Products
         </a>
 
+        <a href="{{ route('shop.products.sales-history') }}" class="{{ request()->routeIs('shop.products.sales-history') ? 'active' : '' }}">
+            <i class="bi bi-clock-history"></i> Sales History
+        </a>
+
         <a href="{{ route('shop.expenses.index') }}" class="{{ request()->routeIs('shop.expenses.*') ? 'active' : '' }}">
             <i class="bi bi-cash-coin"></i> Expenses
         </a>
@@ -242,9 +246,6 @@ body {
             <i class="bi bi-graph-up"></i> Financial Reports
         </a>
 
-        <a href="#" class="">
-            <i class="bi bi-receipt"></i> Today's Receipts
-        </a>
     </div>
 
     <div class="sidebar-footer">

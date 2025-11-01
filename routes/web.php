@@ -203,6 +203,9 @@ Route::middleware(['auth','role:shop'])->prefix('shop')->name('shop.')->group(fu
         Route::post('/{product}/update-stock', [ShopProductController::class,'updateStock'])->name('update-stock');
         Route::post('/{product}/sell', [ShopProductController::class,'sell'])->name('sell');
         Route::get('/receipt/{product}/{qty}', [ShopProductController::class,'receipt'])->name('receipt');
+        // Add this to your shop routes
+Route::get('/history', [ShopProductController::class, 'salesHistory'])
+    ->name('sales-history');
     });
 
     // Cart routes - OUTSIDE products prefix

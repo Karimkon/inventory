@@ -83,7 +83,8 @@
             @csrf
             <div class="modal-header bg-warning">Add Expense<button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
-                <div class="mb-3"><label>Category</label><select name="category" class="form-select" required>
+                <div class="mb-3"><label>Category</label><select name="category" class="form-select form-select-lg" required>
+
                     <option value="">Select...</option>
                     <option value="supplies">Supplies</option>
                     <option value="transport">Transport</option>
@@ -320,7 +321,22 @@ document.addEventListener('DOMContentLoaded', updateCartUI);
 
 
 <style>
+/* Fix white text in expense modal */
+#addExpenseModal .modal-body label,
+#addExpenseModal .modal-body input,
+#addExpenseModal .modal-body select {
+    color: #212529 !important;
+}
+
+#addExpenseModal .modal-body .form-control,
+#addExpenseModal .modal-body .form-select {
+    background-color: #fff !important;
+    color: #212529 !important;
+}
+
+/* Keep your product card hover as is */
 .product-card { transition: all 0.3s ease; border: 1px solid #e9ecef; }
 .product-card:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-color: #0d6efd; }
 </style>
+
 @endsection

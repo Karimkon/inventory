@@ -438,7 +438,6 @@
             <div class="footer">
                 <div class="footer-text">© 2025 ShopFlow Uganda. All rights reserved.</div>
                 <div class="footer-subtext">Empowering businesses with smart management tools 📊</div>
-                <b>Built by Abdulkarim software developer - 0707208954</b>
             </div>
         </div>
     </div>

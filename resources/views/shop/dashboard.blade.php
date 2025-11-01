@@ -15,6 +15,15 @@
             </div>
         </div>
 
+        <!-- Expected Revenue -->
+<div class="col-md-3">
+    <div class="card shadow-sm bg-success text-white p-3 text-center">
+        <h5>Stock Value</h5>
+        <h2>UGX {{ number_format($expectedRevenue) }}</h2>
+        <small>Potential: UGX {{ number_format($potentialProfit) }}</small>
+    </div>
+</div>
+
         <!-- Sales Today -->
         <div class="col-md-3">
             <div class="card shadow-sm bg-light p-3 text-center">

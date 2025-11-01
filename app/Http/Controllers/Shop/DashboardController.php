@@ -52,9 +52,20 @@ class DashboardController extends Controller
         ->take(10)
         ->get();
 
+        // Calculate expected revenue from all stock
+$expectedRevenue = Product::where('shop_id', $shopId)
+    ->sum(DB::raw('price * stock'));
+
+// Calculate total investment in stock
+$totalInvestment = Product::where('shop_id', $shopId)
+    ->sum(DB::raw('cost_price * stock'));
+
+// Calculate potential profit
+$potentialProfit = $expectedRevenue - $totalInvestment;
+
         return view('shop.dashboard', compact(
             'totalProducts', 'recentProducts', 'salesToday', 'profitToday', 'salesWeek', 'profitWeek',
-            'lowStockProducts', 'outOfStockProducts', 'lowStockItems'
+            'lowStockProducts', 'outOfStockProducts', 'lowStockItems',  'expectedRevenue', 'totalInvestment', 'potentialProfit'
         ));
     }
 }

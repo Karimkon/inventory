@@ -47,7 +47,7 @@
             <!-- Business Plans -->
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 @foreach([
-                    'retail' => ['name' => 'Retail Shop', 'price' => '2000', 'color' => 'green'],
+                    'retail' => ['name' => 'Retail Shop', 'price' => '50000', 'color' => 'green'],
                     'wholesale' => ['name' => 'Wholesale Business', 'price' => '120,000', 'color' => 'blue'],
                     'hardware' => ['name' => 'Hardware Store', 'price' => '200,000', 'color' => 'orange'],
                     'supermarket' => ['name' => 'Supermarket', 'price' => '500,000', 'color' => 'purple']

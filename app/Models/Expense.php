@@ -56,4 +56,21 @@ class Expense extends Model
         return $query->whereMonth('expense_date', now()->month)
                     ->whereYear('expense_date', now()->year);
     }
+
+    // Add to your Expense model (app/Models/Expense.php)
+public function getCategoryIconAttribute()
+{
+    $icons = [
+        'rent' => 'house',
+        'utilities' => 'lightning',
+        'salaries' => 'people',
+        'supplies' => 'box',
+        'marketing' => 'megaphone',
+        'transport' => 'truck',
+        'maintenance' => 'tools',
+        'other' => 'tag'
+    ];
+    
+    return $icons[$this->category] ?? 'receipt';
+}
 }
