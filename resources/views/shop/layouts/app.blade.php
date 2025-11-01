@@ -218,10 +218,26 @@ body {
     </div>
 
     <div class="sidebar-content">
+         @php
+        $shop = Auth::user()->shop;
+        $hasActiveSubscription = $shop->has_active_subscription;
+    @endphp
         <a href="{{ route('shop.dashboard') }}" class="{{ request()->routeIs('shop.dashboard') ? 'active' : '' }}">
             <i class="bi bi-speedometer2"></i> Dashboard
         </a>
 
+       <a href="{{ route('shop.subscription.status') }}" class="{{ request()->routeIs('shop.subscription.*') ? 'active' : '' }}">
+        <i class="bi bi-credit-card"></i> 
+        Subscription 
+        @if(!$hasActiveSubscription)
+            <span class="badge bg-danger ms-2">Expired</span>
+        @else
+            <span class="badge bg-success ms-2">Active</span>
+        @endif
+    </a>
+
+    
+        @if($hasActiveSubscription)
         <a href="{{ route('shop.products.index') }}" class="{{ request()->routeIs('shop.products.index') ? 'active' : '' }}">
             <i class="bi bi-box-seam"></i>Sell Products
         </a>
@@ -245,6 +261,26 @@ body {
         <a href="{{ route('shop.reports.index') }}" class="{{ request()->routeIs('shop.reports.*') ? 'active' : '' }}">
             <i class="bi bi-graph-up"></i> Financial Reports
         </a>
+
+         @else
+        <!-- Show renewal options for inactive shops -->
+        <div class="alert alert-warning m-2 p-2 text-center">
+            <small>
+                <i class="bi bi-exclamation-triangle"></i><br>
+                Subscription Expired
+            </small>
+        </div>
+        
+        @if($shop->activeSubscription)
+            <a href="{{ route('shop.subscription.renew') }}" class="bg-warning text-dark">
+                <i class="bi bi-arrow-clockwise"></i> Renew Subscription
+            </a>
+        @else
+            <a href="{{ route('shop.subscription.create') }}" class="bg-warning text-dark">
+                <i class="bi bi-plus-circle"></i> Activate Subscription
+            </a>
+        @endif
+    @endif
 
     </div>
 

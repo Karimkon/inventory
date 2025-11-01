@@ -249,6 +249,7 @@ Route::get('/history', [ShopProductController::class, 'salesHistory'])
     Route::prefix('subscription')->name('subscription.')->group(function () {
         Route::get('/renew', [\App\Http\Controllers\Shop\SubscriptionController::class, 'showRenewal'])->name('renew');
         Route::post('/renew', [\App\Http\Controllers\Shop\SubscriptionController::class, 'processRenewal'])->name('process-renewal');
+        Route::get('/renewal-callback', [\App\Http\Controllers\Shop\SubscriptionController::class, 'renewalCallback'])->name('renewal-callback');
         Route::get('/status', [\App\Http\Controllers\Shop\SubscriptionController::class, 'status'])->name('status');
     });
 });

@@ -185,22 +185,24 @@ class SubscriptionController extends Controller
     /**
      * Extend subscription expiry.
      */
-    public function extend(Request $request, Subscription $subscription)
-    {
-        $request->validate([
-            'extension_days' => 'required|integer|min:1|max:365'
-        ]);
+   public function extend(Request $request, Subscription $subscription)
+{
+    $request->validate([
+        'extension_days' => 'required|integer|min:1|max:365'
+    ]);
 
-        $newExpiry = Carbon::parse($subscription->expires_at)->addDays($request->extension_days);
-        
-        $subscription->update([
-            'expires_at' => $newExpiry,
-            'admin_notes' => $subscription->admin_notes . "\nExtended by {$request->extension_days} days on " . Carbon::now()->format('Y-m-d'),
-        ]);
+    // Convert to integer to ensure it's not a string
+    $extensionDays = (int) $request->extension_days;
+    
+    $newExpiry = Carbon::parse($subscription->expires_at)->addDays($extensionDays);
+    
+    $subscription->update([
+        'expires_at' => $newExpiry,
+        'admin_notes' => $subscription->admin_notes . "\nExtended by {$extensionDays} days on " . Carbon::now()->format('Y-m-d'),
+    ]);
 
-        return back()->with('success', "Subscription extended by {$request->extension_days} days. New expiry: {$newExpiry->format('M d, Y')}");
-    }
-
+    return back()->with('success', "Subscription extended by {$extensionDays} days. New expiry: {$newExpiry->format('M d, Y')}");
+}
     /**
      * Deactivate subscription.
      */
