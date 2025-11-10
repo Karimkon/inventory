@@ -169,6 +169,9 @@
                     <div class="shop-info d-inline-block me-3">
                         <strong>{{ session('pos_shop_name') }}</strong>
                     </div>
+                    <a href="{{ route('pos.sales-history') }}" class="btn btn-sm btn-info me-2">
+                        <i class="bi bi-clock-history"></i> Sales History
+                    </a>
                     <form action="{{ route('pos.logout') }}" method="POST" class="d-inline">
                         @csrf
                         <button type="submit" class="btn btn-sm btn-outline-light">

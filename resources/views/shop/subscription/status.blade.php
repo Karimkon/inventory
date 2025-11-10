@@ -175,9 +175,9 @@
                 <div class="card-body">
                     <p>If you're experiencing issues with your subscription or payment, please contact our support team:</p>
                     <ul>
-                        <li><strong>Email:</strong> support@redversshopflow.com</li>
-                        <li><strong>Phone:</strong> +256 700 000 000</li>
-                        <li><strong>Hours:</strong> Mon-Fri, 8:00 AM - 5:00 PM</li>
+                        <li><strong>Email:</strong> redversemobility@gmail.com</li>
+                        <li><strong>Phone:</strong> +256 788135150 / +256 741613506</li>
+                        <li><strong>Hours:</strong> Mon-Sat, 8:00 AM - 5:00 PM</li>
                     </ul>
                 </div>
             </div>

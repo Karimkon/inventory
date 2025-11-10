@@ -69,15 +69,6 @@ class PublicOnboardingController extends Controller
         'months' => 'required|integer|min:1|max:48',
     ]);
 
-    // Check if email already has pending application
-    $existingApplication = OnboardingApplication::where('email', $request->email)
-        ->whereIn('status', ['pending', 'paid', 'pending_approval'])
-        ->first();
-
-    if ($existingApplication) {
-        return redirect()->route('onboarding.status', ['reference' => $existingApplication->reference])
-            ->with('info', 'You already have a pending application. Check status below.');
-    }
 
     $plan = self::PLANS[$request->business_type];
     $reference = 'APP-' . Str::uuid()->toString();
@@ -99,14 +90,6 @@ class PublicOnboardingController extends Controller
         'months_paid' => $request->months, // Save selected months for future reference
         'total_amount' => $totalAmount, // Only activation fee
         'status' => 'pending',
-    ]);
-
-    Log::info('Application created - Onboarding (Activation Fee Only)', [
-        'application_id' => $application->id,
-        'months_selected' => $request->months,
-        'activation_fee' => $plan['activation_fee'],
-        'monthly_fee' => $plan['monthly_fee'],
-        'total_charged' => $totalAmount
     ]);
 
     return redirect()->route('onboarding.payment', $application)

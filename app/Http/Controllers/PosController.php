@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Expense;
 use App\Models\Sale;
 use Illuminate\Support\Facades\Session;
+use Carbon\Carbon;
 
 class PosController extends Controller
 {
@@ -52,8 +53,8 @@ class PosController extends Controller
                          ->with('success', "POS access granted for {$shop->name}");
     }
 
-    /**
-     * POS Dashboard
+     /**
+     * POS Dashboard with enhanced data
      */
     public function dashboard(Request $request)
     {
@@ -69,17 +70,151 @@ class PosController extends Controller
 
         $search = $request->query('search');
 
+        // Get products
         $products = Product::where('shop_id', $shop->id)
             ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
             ->paginate(12);
 
-        return view('pos.dashboard', compact('products', 'search'));
+        // Dashboard statistics
+        $totalProducts = Product::where('shop_id', $shop->id)->count();
+        $lowStockProducts = Product::where('shop_id', $shop->id)
+            ->where('stock', '<=', 5)
+            ->where('stock', '>', 0)
+            ->count();
+        $outOfStockProducts = Product::where('shop_id', $shop->id)
+            ->where('stock', 0)
+            ->count();
+        
+        // Today's sales
+        $todaySales = Sale::where('shop_id', $shop->id)
+            ->whereDate('created_at', Carbon::today())
+            ->get();
+        
+        $todayRevenue = $todaySales->sum(function($sale) {
+            return $sale->sold_price * $sale->quantity;
+        });
+        
+        $todayProfit = $todaySales->sum(function($sale) {
+            return ($sale->sold_price - $sale->cost_price) * $sale->quantity;
+        });
+
+        // Stock value
+        $stockValue = Product::where('shop_id', $shop->id)
+            ->sum(\DB::raw('stock * cost_price'));
+
+        return view('pos.dashboard', compact(
+            'products', 
+            'search',
+            'totalProducts',
+            'lowStockProducts',
+            'outOfStockProducts',
+            'todayRevenue',
+            'todayProfit',
+            'stockValue',
+            'shop'
+        ));
     }
 
+
+    /**
+     * POS Sales History
+     */
+    public function salesHistory(Request $request)
+    {
+        $this->checkPosAccess();
+        $shopId = session('pos_shop_id');
+
+        // Get filter parameters
+        $timeRange = $request->get('time_range', 'today');
+        $date = $request->get('date', now()->format('Y-m-d'));
+        $productId = $request->get('product_id');
+
+        // Base query
+        $salesQuery = Sale::with('product')
+            ->where('shop_id', $shopId);
+
+        // Apply time filters
+        if ($timeRange === 'today') {
+            $salesQuery->whereDate('created_at', Carbon::today());
+        } elseif ($timeRange === 'week') {
+            $salesQuery->whereBetween('created_at', [
+                Carbon::now()->startOfWeek(),
+                Carbon::now()->endOfWeek()
+            ]);
+        } elseif ($timeRange === 'month') {
+            $salesQuery->whereMonth('created_at', Carbon::now()->month)
+                      ->whereYear('created_at', Carbon::now()->year);
+        } elseif ($timeRange === 'custom' && $date) {
+            $salesQuery->whereDate('created_at', $date);
+        }
+
+        // Apply product filter
+        if ($productId) {
+            $salesQuery->where('product_id', $productId);
+        }
+
+        // Get sales data
+        $sales = $salesQuery->orderBy('created_at', 'desc')->paginate(20);
+
+        // Summary statistics
+        $totalSales = $salesQuery->count();
+        $totalQuantity = $salesQuery->sum('quantity');
+        $totalRevenue = $salesQuery->get()->sum(function($sale) {
+            return $sale->sold_price * $sale->quantity;
+        });
+        $totalProfit = $salesQuery->get()->sum(function($sale) {
+            return ($sale->sold_price - $sale->cost_price) * $sale->quantity;
+        });
+
+        // Sales by product
+        $salesByProduct = Sale::where('shop_id', $shopId)
+            ->when($timeRange === 'today', fn($q) => $q->whereDate('created_at', Carbon::today()))
+            ->when($timeRange === 'week', fn($q) => $q->whereBetween('created_at', [
+                Carbon::now()->startOfWeek(),
+                Carbon::now()->endOfWeek()
+            ]))
+            ->when($timeRange === 'month', fn($q) => $q->whereMonth('created_at', Carbon::now()->month))
+            ->when($timeRange === 'custom' && $date, fn($q) => $q->whereDate('created_at', $date))
+            ->with('product')
+            ->get()
+            ->groupBy('product_id')
+            ->map(function($productSales) {
+                $firstSale = $productSales->first();
+                return [
+                    'product_name' => $firstSale->product->name,
+                    'total_quantity' => $productSales->sum('quantity'),
+                    'total_revenue' => $productSales->sum(function($sale) {
+                        return $sale->sold_price * $sale->quantity;
+                    }),
+                    'total_profit' => $productSales->sum(function($sale) {
+                        return ($sale->sold_price - $sale->cost_price) * $sale->quantity;
+                    }),
+                    'sales_count' => $productSales->count(),
+                ];
+            })
+            ->values();
+
+        // Get products for filter dropdown
+        $products = Product::where('shop_id', $shopId)->get();
+
+        return view('pos.sales-history', compact(
+            'sales',
+            'totalSales',
+            'totalQuantity',
+            'totalRevenue',
+            'totalProfit',
+            'salesByProduct',
+            'products',
+            'timeRange',
+            'date',
+            'productId'
+        ));
+    }
+    
     /**
      * Quick Sell product
      */
-   public function sell(Request $request, Product $product)
+  public function sell(Request $request, Product $product)
 {
     $this->checkShopAccess($product->shop_id);
 
@@ -90,6 +225,10 @@ class PosController extends Controller
     $quantity = $request->quantity;
 
     try {
+        // Generate receipt number
+        $shop = Shop::find(session('pos_shop_id'));
+        $receiptNumber = $this->generateReceiptNumber($shop->name);
+        
         $sale = Sale::create([
             'product_id' => $product->id,
             'shop_id' => $product->shop_id,
@@ -100,8 +239,10 @@ class PosController extends Controller
 
         $product->decrement('stock', $quantity);
 
-        // Save session for receipt
+        // Save session for receipt WITH RECEIPT NUMBER
         Session::put('pos_last_sale', [
+            'receipt_number' => $receiptNumber,
+            'shop_name' => $shop->name,
             'items' => [[
                 'product_name' => $product->name,
                 'quantity' => $quantity,
@@ -115,8 +256,8 @@ class PosController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Sold {$quantity} × {$product->name}",
-            'total' => $product->price * $quantity,
-            'receipt_url' => route('pos.cart.receipt') // <-- URL for printing
+            'receipt_number' => $receiptNumber,
+            'receipt_url' => route('pos.cart.receipt')
         ]);
 
     } catch (\Exception $e) {
@@ -270,6 +411,10 @@ class PosController extends Controller
     $totalAmount = 0;
     $totalProfit = 0;
 
+     // Generate receipt number
+    $shop = Shop::find(session('pos_shop_id'));
+    $receiptNumber = $this->generateReceiptNumber($shop->name);
+
     \DB::beginTransaction();
 
     try {
@@ -318,6 +463,8 @@ class PosController extends Controller
 
         // Save sold items in session for receipt
         Session::put('pos_last_sale', [
+             'receipt_number' => $receiptNumber,
+            'shop_name' => $shop->name,
             'items' => $soldItems,
             'total_amount' => $totalAmount,
             'total_profit' => $totalProfit,
@@ -330,6 +477,7 @@ class PosController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Sale completed successfully!',
+            'receipt_number' => $receiptNumber,
             'total_amount' => $totalAmount,
             'total_profit' => $totalProfit
         ]);
@@ -354,13 +502,12 @@ class PosController extends Controller
         return back()->with('error', 'No sale data found.');
     }
 
-    $soldItems = $lastSale['items'];
-
-    $total = array_sum(array_column($soldItems, 'total')); // safer than using 'price' * 'quantity'
-
     return view('pos.receipt', [
-        'cart' => $soldItems,
-        'total' => $total,
+        'receipt_number' => $lastSale['receipt_number'],
+        'shop_name' => $lastSale['shop_name'],
+        'cart' => $lastSale['items'],
+        'total' => $lastSale['total_amount'],
+        'sold_at' => $lastSale['sold_at'],
     ]);
 }
 
@@ -383,4 +530,20 @@ class PosController extends Controller
             abort(403, 'Unauthorized product access.');
         }
     }
+
+    // Add this method to your existing PosController
+private function generateReceiptNumber($shopName)
+{
+    // Get shop prefix from name (first 3 letters uppercase)
+    $prefix = strtoupper(substr($shopName, 0, 3));
+    
+    // Get today's sales count for this shop + 1
+    $todaySalesCount = Sale::where('shop_id', session('pos_shop_id'))
+        ->whereDate('created_at', today())
+        ->count();
+    
+    $nextNumber = str_pad($todaySalesCount + 1, 3, '0', STR_PAD_LEFT);
+    
+    return $prefix . '-' . date('Ymd') . '-' . $nextNumber;
+}
 }

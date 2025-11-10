@@ -29,7 +29,7 @@ Route::prefix('pos')->name('pos.')->group(function () {
     Route::get('/receipt/{product}/{qty}', [PosController::class, 'receipt'])->name('receipt');
     Route::post('/expenses', [PosController::class, 'storeExpense'])->name('expenses.store');
     Route::post('/logout', [PosController::class, 'logout'])->name('logout');
-
+    Route::get('/sales-history', [PosController::class, 'salesHistory'])->name('sales-history');
 
     Route::prefix('cart')->name('cart.')->group(function () {
     Route::post('{productId}/add', [PosController::class, 'addToCart'])->name('add');
