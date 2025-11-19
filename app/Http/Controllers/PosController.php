@@ -57,63 +57,68 @@ class PosController extends Controller
      * POS Dashboard with enhanced data
      */
     public function dashboard(Request $request)
-    {
-        if (!session('pos_access') || !session('pos_shop_id')) {
-            return redirect()->route('pos.login')->with('error', 'POS session expired. Please login again.');
-        }
-
-        $shop = Shop::find(session('pos_shop_id'));
-        if (!$shop) {
-            session()->forget(['pos_access', 'pos_shop_id', 'pos_shop_name']);
-            return redirect()->route('pos.login')->with('error', 'Shop no longer exists.');
-        }
-
-        $search = $request->query('search');
-
-        // Get products
-        $products = Product::where('shop_id', $shop->id)
-            ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
-            ->paginate(12);
-
-        // Dashboard statistics
-        $totalProducts = Product::where('shop_id', $shop->id)->count();
-        $lowStockProducts = Product::where('shop_id', $shop->id)
-            ->where('stock', '<=', 5)
-            ->where('stock', '>', 0)
-            ->count();
-        $outOfStockProducts = Product::where('shop_id', $shop->id)
-            ->where('stock', 0)
-            ->count();
-        
-        // Today's sales
-        $todaySales = Sale::where('shop_id', $shop->id)
-            ->whereDate('created_at', Carbon::today())
-            ->get();
-        
-        $todayRevenue = $todaySales->sum(function($sale) {
-            return $sale->sold_price * $sale->quantity;
-        });
-        
-        $todayProfit = $todaySales->sum(function($sale) {
-            return ($sale->sold_price - $sale->cost_price) * $sale->quantity;
-        });
-
-        // Stock value
-        $stockValue = Product::where('shop_id', $shop->id)
-            ->sum(\DB::raw('stock * cost_price'));
-
-        return view('pos.dashboard', compact(
-            'products', 
-            'search',
-            'totalProducts',
-            'lowStockProducts',
-            'outOfStockProducts',
-            'todayRevenue',
-            'todayProfit',
-            'stockValue',
-            'shop'
-        ));
+{
+    if (!session('pos_access') || !session('pos_shop_id')) {
+        return redirect()->route('pos.login')->with('error', 'POS session expired. Please login again.');
     }
+
+    $shop = Shop::find(session('pos_shop_id'));
+    if (!$shop) {
+        session()->forget(['pos_access', 'pos_shop_id', 'pos_shop_name']);
+        return redirect()->route('pos.login')->with('error', 'Shop no longer exists.');
+    }
+
+    $search = $request->query('search');
+
+    // Get products
+    $products = Product::where('shop_id', $shop->id)
+        ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
+        ->paginate(12);
+
+    // Dashboard statistics
+    $totalProducts = Product::where('shop_id', $shop->id)->count();
+    $lowStockProducts = Product::where('shop_id', $shop->id)
+        ->where('stock', '<=', 5)
+        ->where('stock', '>', 0)
+        ->count();
+    $outOfStockProducts = Product::where('shop_id', $shop->id)
+        ->where('stock', 0)
+        ->count();
+    $criticalStockProducts = Product::where('shop_id', $shop->id)
+        ->where('stock', '>', 0)
+        ->where('stock', '<=', 2)
+        ->count();
+    
+    // Today's sales
+    $todaySales = Sale::where('shop_id', $shop->id)
+        ->whereDate('created_at', Carbon::today())
+        ->get();
+    
+    $todayRevenue = $todaySales->sum(function($sale) {
+        return $sale->sold_price * $sale->quantity;
+    });
+    
+    $todayProfit = $todaySales->sum(function($sale) {
+        return ($sale->sold_price - $sale->cost_price) * $sale->quantity;
+    });
+
+    // Stock value
+    $stockValue = Product::where('shop_id', $shop->id)
+        ->sum(\DB::raw('stock * cost_price'));
+
+    return view('pos.dashboard', compact(
+        'products', 
+        'search',
+        'totalProducts',
+        'lowStockProducts',
+        'outOfStockProducts',
+        'criticalStockProducts',
+        'todayRevenue',
+        'todayProfit',
+        'stockValue',
+        'shop'
+    ));
+}
 
 
     /**
@@ -545,5 +550,67 @@ private function generateReceiptNumber($shopName)
     $nextNumber = str_pad($todaySalesCount + 1, 3, '0', STR_PAD_LEFT);
     
     return $prefix . '-' . date('Ymd') . '-' . $nextNumber;
+}
+
+/**
+ * POS Low Stock Report
+ */
+public function lowStockReport(Request $request)
+{
+    $this->checkPosAccess();
+    $shopId = session('pos_shop_id');
+    $type = $request->get('type', 'all'); // all, low, critical, out
+    
+    $query = Product::where('shop_id', $shopId);
+    
+    // Apply filters
+    switch ($type) {
+        case 'low':
+            $query->where('stock', '>', 0)
+                  ->where('stock', '<=', 5);
+            $title = 'Low Stock Products (1-5 items)';
+            break;
+        case 'critical':
+            $query->where('stock', '>', 0)
+                  ->where('stock', '<=', 2);
+            $title = 'Critical Stock (1-2 items)';
+            break;
+        case 'out':
+            $query->where('stock', 0);
+            $title = 'Out of Stock Products';
+            break;
+        case 'all':
+        default:
+            $query->where(function($q) {
+                $q->where('stock', 0)
+                  ->orWhere('stock', '<=', 5);
+            });
+            $title = 'All Stock Alerts';
+            break;
+    }
+    
+    $products = $query->orderBy('stock', 'asc')
+                     ->orderBy('name', 'asc')
+                     ->paginate(15);
+    
+    // Get counts for filter badges
+    $counts = [
+        'all' => Product::where('shop_id', $shopId)
+            ->where(function($q) {
+                $q->where('stock', 0)->orWhere('stock', '<=', 5);
+            })->count(),
+        'low' => Product::where('shop_id', $shopId)
+            ->where('stock', '>', 0)
+            ->where('stock', '<=', 5)->count(),
+        'critical' => Product::where('shop_id', $shopId)
+            ->where('stock', '>', 0)
+            ->where('stock', '<=', 2)->count(),
+        'out' => Product::where('shop_id', $shopId)
+            ->where('stock', 0)->count(),
+    ];
+    
+    return view('pos.low-stock-report', compact(
+        'products', 'type', 'title', 'counts'
+    ));
 }
 }

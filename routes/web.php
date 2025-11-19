@@ -31,6 +31,10 @@ Route::prefix('pos')->name('pos.')->group(function () {
     Route::post('/logout', [PosController::class, 'logout'])->name('logout');
     Route::get('/sales-history', [PosController::class, 'salesHistory'])->name('sales-history');
 
+        // Add low stock report route here (OUTSIDE cart prefix)
+    Route::get('/low-stock-report', [PosController::class, 'lowStockReport'])
+        ->name('low-stock-report');
+
     Route::prefix('cart')->name('cart.')->group(function () {
     Route::post('{productId}/add', [PosController::class, 'addToCart'])->name('add');
     Route::put('{productId}/update', [PosController::class, 'updateCart'])->name('update');
@@ -206,7 +210,10 @@ Route::middleware(['auth','role:shop'])->prefix('shop')->name('shop.')->group(fu
         // Add this to your shop routes
 Route::get('/history', [ShopProductController::class, 'salesHistory'])
     ->name('sales-history');
+    Route::get('/low-stock-report', [ShopProductController::class, 'lowStockReport'])
+    ->name('low-stock-report');
     });
+    
 
     // Cart routes - OUTSIDE products prefix
     Route::post('/cart/{productId}/add', [ShopProductController::class, 'addToCart'])->name('cart.add');

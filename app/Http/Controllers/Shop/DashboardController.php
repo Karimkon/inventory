@@ -1,71 +1,159 @@
 <?php
+
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Sale;
-use Carbon\Carbon;
+use App\Models\Expense;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $shopId = Auth::user()->shop_id;
+        $shop = Auth::user()->shop;
+        $shopId = $shop->id;
 
-        // Products stats - ONLY CURRENT SHOP
+        // Get dashboard statistics using existing logic
         $totalProducts = Product::where('shop_id', $shopId)->count();
-        $recentProducts = Product::where('shop_id', $shopId)->latest()->take(5)->get();
+        
+        // Use the same logic as your existing dashboard
+        $lowStockProducts = Product::where('shop_id', $shopId)
+            ->where('stock', '>', 0)
+            ->where('stock', '<=', 5)
+            ->count();
+            
+        $outOfStockProducts = Product::where('shop_id', $shopId)
+            ->where('stock', 0)
+            ->count();
+            
+        $criticalStockProducts = Product::where('shop_id', $shopId)
+            ->where('stock', '>', 0)
+            ->where('stock', '<=', 2)
+            ->count();
 
-        // Sales & profit - ONLY CURRENT SHOP
+        // Get recent low stock items (stock <= 5)
+        $lowStockItems = Product::where('shop_id', $shopId)
+            ->where(function($query) {
+                $query->where('stock', 0)
+                      ->orWhere('stock', '<=', 5);
+            })
+            ->orderBy('stock', 'asc')
+            ->limit(10)
+            ->get();
+
+        // Calculate inventory value and potential profit (same as existing)
+        $inventoryData = Product::where('shop_id', $shopId)
+            ->select(
+                DB::raw('SUM(stock * cost_price) as inventory_value'),
+                DB::raw('SUM(stock * (price - cost_price)) as potential_profit')
+            )->first();
+
+        $expectedRevenue = $inventoryData->inventory_value ?? 0;
+        $potentialProfit = $inventoryData->potential_profit ?? 0;
+
+        // Sales data (same as existing)
         $salesToday = Sale::where('shop_id', $shopId)
-            ->whereDate('created_at', Carbon::today())->sum('quantity');
-            
-        $profitToday = Sale::where('shop_id', $shopId)
-            ->whereDate('created_at', Carbon::today())
-            ->sum(DB::raw('(sold_price - cost_price) * quantity')); // FIXED
-
-        // Add weekly and monthly stats
-        $salesWeek = Sale::where('shop_id', $shopId)
-            ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+            ->whereDate('created_at', today())
             ->sum('quantity');
-            
-        $profitWeek = Sale::where('shop_id', $shopId)
-            ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+
+        $profitToday = Sale::where('shop_id', $shopId)
+            ->whereDate('created_at', today())
             ->sum(DB::raw('(sold_price - cost_price) * quantity'));
 
-            // ADD: Stock Alerts
-    $lowStockProducts = Product::where('shop_id', $shopId)
-        ->where('stock', '<=', 5)
-        ->where('stock', '>', 0)
-        ->count();
+        $salesWeek = Sale::where('shop_id', $shopId)
+            ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+            ->sum('quantity');
 
-    $outOfStockProducts = Product::where('shop_id', $shopId)
-        ->where('stock', 0)
-        ->count();
+        $profitWeek = Sale::where('shop_id', $shopId)
+            ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+            ->sum(DB::raw('(sold_price - cost_price) * quantity'));
 
-    $lowStockItems = Product::where('shop_id', $shopId)
-        ->where('stock', '<=', 5)
-        ->orderBy('stock', 'asc')
-        ->take(10)
-        ->get();
-
-        // Calculate expected revenue from all stock
-$expectedRevenue = Product::where('shop_id', $shopId)
-    ->sum(DB::raw('price * stock'));
-
-// Calculate total investment in stock
-$totalInvestment = Product::where('shop_id', $shopId)
-    ->sum(DB::raw('cost_price * stock'));
-
-// Calculate potential profit
-$potentialProfit = $expectedRevenue - $totalInvestment;
+        // Recent products (same as existing)
+        $recentProducts = Product::where('shop_id', $shopId)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
 
         return view('shop.dashboard', compact(
-            'totalProducts', 'recentProducts', 'salesToday', 'profitToday', 'salesWeek', 'profitWeek',
-            'lowStockProducts', 'outOfStockProducts', 'lowStockItems',  'expectedRevenue', 'totalInvestment', 'potentialProfit'
+            'totalProducts',
+            'lowStockProducts',
+            'outOfStockProducts',
+            'criticalStockProducts',
+            'lowStockItems',
+            'expectedRevenue',
+            'potentialProfit',
+            'salesToday',
+            'profitToday',
+            'salesWeek',
+            'profitWeek',
+            'recentProducts',
+            'shop'
+        ));
+    }
+
+    /**
+     * Detailed Low Stock Report Page
+     */
+    public function lowStockReport(Request $request)
+    {
+        $shopId = Auth::user()->shop_id;
+        $type = $request->get('type', 'all'); // all, low, critical, out
+        
+        $query = Product::where('shop_id', $shopId);
+        
+        // Apply filters
+        switch ($type) {
+            case 'low':
+                $query->where('stock', '>', 0)
+                      ->where('stock', '<=', 5);
+                $title = 'Low Stock Products (1-5 items)';
+                break;
+            case 'critical':
+                $query->where('stock', '>', 0)
+                      ->where('stock', '<=', 2);
+                $title = 'Critical Stock (1-2 items)';
+                break;
+            case 'out':
+                $query->where('stock', 0);
+                $title = 'Out of Stock Products';
+                break;
+            case 'all':
+            default:
+                $query->where(function($q) {
+                    $q->where('stock', 0)
+                      ->orWhere('stock', '<=', 5);
+                });
+                $title = 'All Stock Alerts';
+                break;
+        }
+        
+        $products = $query->orderBy('stock', 'asc')
+                         ->orderBy('name', 'asc')
+                         ->paginate(20);
+        
+        // Get counts for filter badges
+        $counts = [
+            'all' => Product::where('shop_id', $shopId)
+                ->where(function($q) {
+                    $q->where('stock', 0)->orWhere('stock', '<=', 5);
+                })->count(),
+            'low' => Product::where('shop_id', $shopId)
+                ->where('stock', '>', 0)
+                ->where('stock', '<=', 5)->count(),
+            'critical' => Product::where('shop_id', $shopId)
+                ->where('stock', '>', 0)
+                ->where('stock', '<=', 2)->count(),
+            'out' => Product::where('shop_id', $shopId)
+                ->where('stock', 0)->count(),
+        ];
+        
+        return view('shop.products.low-stock-report', compact(
+            'products', 'type', 'title', 'counts'
         ));
     }
 }

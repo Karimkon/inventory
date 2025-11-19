@@ -8,6 +8,8 @@ use App\Models\Sale;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+use App\Models\Shop;
 
 class ProductController extends Controller
 {
@@ -553,5 +555,66 @@ public function salesHistory(Request $request)
         'timeRange'
     ));
 }   
+
+/**
+ * Detailed Low Stock Report
+ */
+public function lowStockReport(Request $request)
+{
+    $shopId = Auth::user()->shop_id;
+    $type = $request->get('type', 'all'); // all, low, critical, out
+    
+    $query = Product::where('shop_id', $shopId);
+    
+    // Apply filters
+    switch ($type) {
+        case 'low':
+            $query->where('stock', '>', 0)
+                  ->where('stock', '<=', 5);
+            $title = 'Low Stock Products (1-5 items)';
+            break;
+        case 'critical':
+            $query->where('stock', '>', 0)
+                  ->where('stock', '<=', 2);
+            $title = 'Critical Stock (1-2 items)';
+            break;
+        case 'out':
+            $query->where('stock', 0);
+            $title = 'Out of Stock Products';
+            break;
+        case 'all':
+        default:
+            $query->where(function($q) {
+                $q->where('stock', 0)
+                  ->orWhere('stock', '<=', 5);
+            });
+            $title = 'All Stock Alerts';
+            break;
+    }
+    
+    $products = $query->orderBy('stock', 'asc')
+                     ->orderBy('name', 'asc')
+                     ->paginate(20);
+    
+    // Get counts for filter badges
+    $counts = [
+        'all' => Product::where('shop_id', $shopId)
+            ->where(function($q) {
+                $q->where('stock', 0)->orWhere('stock', '<=', 5);
+            })->count(),
+        'low' => Product::where('shop_id', $shopId)
+            ->where('stock', '>', 0)
+            ->where('stock', '<=', 5)->count(),
+        'critical' => Product::where('shop_id', $shopId)
+            ->where('stock', '>', 0)
+            ->where('stock', '<=', 2)->count(),
+        'out' => Product::where('shop_id', $shopId)
+            ->where('stock', 0)->count(),
+    ];
+    
+    return view('shop.products.low-stock-report', compact(
+        'products', 'type', 'title', 'counts'
+    ));
+}
     
 }

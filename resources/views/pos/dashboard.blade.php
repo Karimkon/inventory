@@ -97,6 +97,77 @@
         </div>
     </div>
 
+    <!-- Stock Alerts Row -->
+@if($lowStockProducts > 0 || $outOfStockProducts > 0)
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-warning">
+            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Stock Alerts
+                </h5>
+                    <a href="{{ route('pos.low-stock-report') }}" class="btn btn-sm btn-outline-dark">
+                    <i class="bi bi-clipboard-data"></i> View Report
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    @if($outOfStockProducts > 0)
+                    <div class="col-md-4">
+                        <div class="alert alert-danger h-100 m-0">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-x-circle-fill fs-4 me-3"></i>
+                                <div>
+                                    <h6 class="mb-1">Out of Stock</h6>
+                                    <p class="mb-1">{{ $outOfStockProducts }} products</p>
+                                    <small>Immediate restocking needed</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if($lowStockProducts > 0)
+                    <div class="col-md-4">
+                        <div class="alert alert-warning h-100 m-0">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                                <div>
+                                    <h6 class="mb-1">Low Stock</h6>
+                                    <p class="mb-1">{{ $lowStockProducts }} products</p>
+                                    <small>Running low on inventory</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    <div class="col-md-4">
+                        <div class="bg-light rounded p-3 h-100">
+                            <h6 class="mb-2">Stock Summary</h6>
+                            <div class="small">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Total Products:</span>
+                                    <strong>{{ $totalProducts }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-warning">Low Stock:</span>
+                                    <strong>{{ $lowStockProducts }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-danger">Out of Stock:</span>
+                                    <strong>{{ $outOfStockProducts }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
     <div class="row">
         <!-- Quick Actions & Cart Sidebar -->
         <div class="col-xl-3 col-lg-4 mb-4">

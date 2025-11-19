@@ -139,10 +139,7 @@
 <body>
     <div class="receipt-header">
         <div class="shop-name">
-            {{ session('pos_shop_name') ?? 'REDVERS E MOBILITY' }}
-        </div>
-        <div style="font-size: 10px; color: #666;">
-            Electronic & Mobility Solutions
+            {{ session('pos_shop_name') ?? 'SHOP' }}
         </div>
     </div>
     
@@ -218,10 +215,7 @@
         <div class="thank-you">
             THANK YOU FOR YOUR BUSINESS!
         </div>
-        <div class="contact">
-            For inquiries: +256 XXX XXX XXX<br>
-            www.redversemobility.com
-        </div>
+        
         <div style="margin-top: 8px; font-size: 9px; color: #888;">
             {{ date('Y') }} &copy; {{ session('pos_shop_name') ?? 'Redvers E Mobility' }}
         </div>
