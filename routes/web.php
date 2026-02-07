@@ -187,7 +187,7 @@ Route::prefix('subscriptions')->name('subscriptions.')->group(function () {
 // ----------------------
 // Shop Protected Routes (Shop-specific operations)
 // ----------------------
-Route::middleware(['auth','role:shop'])->prefix('shop')->name('shop.')->group(function(){
+Route::middleware(['auth','role:shop','check.subscription'])->prefix('shop')->name('shop.')->group(function(){
 
     // Dashboard (Shop-specific)
     Route::get('/dashboard', [ShopDashboardController::class,'index'])->name('dashboard');

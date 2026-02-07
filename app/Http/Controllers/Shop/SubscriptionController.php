@@ -29,10 +29,18 @@ class SubscriptionController extends Controller
     {
         $shop = Auth::user()->shop;
         $activeSubscription = $shop->activeSubscription;
-        
+
+        // If no active subscription, find the most recent paid one (expired)
         if (!$activeSubscription) {
-            return redirect()->route('shop.subscription.create')
-                ->with('error', 'You need an active subscription first.');
+            $activeSubscription = $shop->subscriptions()
+                ->where('payment_status', 'paid')
+                ->latest()
+                ->first();
+        }
+
+        if (!$activeSubscription) {
+            return redirect()->route('shop.subscription.status')
+                ->with('error', 'No subscription found. Please contact support.');
         }
 
         return view('shop.subscription.renew', compact('shop', 'activeSubscription'));
@@ -58,8 +66,16 @@ public function processRenewal(Request $request)
     $shop = Auth::user()->shop;
     $activeSubscription = $shop->activeSubscription;
 
+    // If no active subscription, find the most recent paid one (expired)
     if (!$activeSubscription) {
-        return back()->with('error', 'No active subscription found.');
+        $activeSubscription = $shop->subscriptions()
+            ->where('payment_status', 'paid')
+            ->latest()
+            ->first();
+    }
+
+    if (!$activeSubscription) {
+        return back()->with('error', 'No subscription found. Please contact support.');
     }
 
     $months = (int) $request->months;
@@ -168,21 +184,28 @@ public function renewalCallback(Request $request)
             $paymentStatus = strtolower($statusResponse['payment_status_description']);
             
             if ($paymentStatus === 'completed') {
-                // Calculate new expiry date by adding months to current expiry
+                // Calculate new expiry: if expired, start from now; otherwise extend from current expiry
                 $currentExpiry = Carbon::parse($subscription->expires_at);
-                $newExpiry = $currentExpiry->copy()->addMonths($renewalMonths);
-                
+                $baseDate = $currentExpiry->isPast() ? Carbon::now() : $currentExpiry->copy();
+                $newExpiry = $baseDate->addMonths($renewalMonths);
+
                 \Log::info('Extending subscription', [
                     'current_expiry' => $currentExpiry,
                     'renewal_months' => $renewalMonths,
                     'new_expiry' => $newExpiry
                 ]);
 
-                // Update subscription with new expiry date
+                // Update subscription with new expiry date and reactivate
                 $subscription->update([
+                    'is_active' => true,
                     'expires_at' => $newExpiry,
                     'total_amount' => $subscription->total_amount + $renewalAmount,
                     'admin_notes' => $subscription->admin_notes . "\nRenewed for {$renewalMonths} month(s) - UGX " . number_format($renewalAmount) . " on " . now()->format('Y-m-d H:i:s') . ". New expiry: " . $newExpiry->format('Y-m-d'),
+                ]);
+
+                // Reactivate the shop
+                $subscription->shop->update([
+                    'subscription_status' => 'active',
                 ]);
 
                 // Clear session
