@@ -255,25 +255,25 @@ public function renewalCallback(Request $request)
         'retail' => [
             'name' => 'Retail Shop',
             'activation_fee' => 50000,
-            'monthly_fee' => 15000,
+            'monthly_fee' => 50000,
             'features' => ['Basic Inventory', 'Sales Tracking', 'Basic Reports']
         ],
         'wholesale' => [
             'name' => 'Wholesale Business',
             'activation_fee' => 120000,
-            'monthly_fee' => 15000,
+            'monthly_fee' => 120000,
             'features' => ['Advanced Inventory', 'Bulk Operations', 'Supplier Management']
         ],
         'hardware' => [
             'name' => 'Hardware Store',
             'activation_fee' => 200000,
-            'monthly_fee' => 15000,
+            'monthly_fee' => 200000,
             'features' => ['Hardware Specific Features', 'Contractor Accounts', 'Project Tracking']
         ],
         'supermarket' => [
             'name' => 'Supermarket',
             'activation_fee' => 500000,
-            'monthly_fee' => 15000,
+            'monthly_fee' => 500000,
             'features' => ['Multi-department', 'Barcode Support', 'Advanced Analytics']
         ]
     ];

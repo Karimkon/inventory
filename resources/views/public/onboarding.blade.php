@@ -47,10 +47,10 @@
             <!-- Business Plans -->
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 @foreach([
-                    'retail' => ['name' => 'Retail Shop', 'monthly' => '15,000', 'color' => 'green'],
-                    'wholesale' => ['name' => 'Wholesale Business', 'monthly' => '15,000', 'color' => 'blue'],
-                    'hardware' => ['name' => 'Hardware Store', 'monthly' => '15,000', 'color' => 'orange'],
-                    'supermarket' => ['name' => 'Supermarket', 'monthly' => '30,000', 'color' => 'purple']
+                    'retail' => ['name' => 'Retail Shop', 'monthly' => '50,000', 'color' => 'green'],
+                    'wholesale' => ['name' => 'Wholesale Business', 'monthly' => '120,000', 'color' => 'blue'],
+                    'hardware' => ['name' => 'Hardware Store', 'monthly' => '200,000', 'color' => 'orange'],
+                    'supermarket' => ['name' => 'Supermarket', 'monthly' => '500,000', 'color' => 'purple']
                 ] as $type => $plan)
                 <div class="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
                     <h3 class="text-xl font-bold mb-2 text-{{ $plan['color'] }}-300">{{ $plan['name'] }}</h3>
@@ -91,10 +91,10 @@
            text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 
            focus:border-cyan-400 appearance-none cursor-pointer">
       <option value="">Select Business Type</option>
-      <option value="retail" class="text-gray-900">Retail Shop (UGX 15,000/mo)</option>
-      <option value="wholesale" class="text-gray-900">Wholesale Business (UGX 15,000/mo)</option>
-      <option value="hardware" class="text-gray-900">Hardware Store (UGX 15,000/mo)</option>
-      <option value="supermarket" class="text-gray-900">Supermarket (UGX 30,000/mo)</option>
+      <option value="retail" class="text-gray-900">Retail Shop (UGX 50,000/mo)</option>
+      <option value="wholesale" class="text-gray-900">Wholesale Business (UGX 120,000/mo)</option>
+      <option value="hardware" class="text-gray-900">Hardware Store (UGX 200,000/mo)</option>
+      <option value="supermarket" class="text-gray-900">Supermarket (UGX 500,000/mo)</option>
   </select>
 
   <!-- Arrow icon -->
