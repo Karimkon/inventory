@@ -150,7 +150,7 @@
                                     @foreach($shop->subscriptions->take(5) as $sub)
                                     <tr>
                                         <td>{{ $sub->plan_details['name'] ?? 'N/A' }}</td>
-                                        <td>UGX {{ number_format($sub->activation_fee) }}</td>
+                                        <td>UGX {{ number_format($sub->monthly_fee) }}/mo</td>
                                         <td>
                                             <span class="badge bg-{{ $sub->payment_status === 'paid' ? 'success' : 'warning' }}">
                                                 {{ ucfirst($sub->payment_status) }}

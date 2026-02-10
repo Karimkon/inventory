@@ -47,22 +47,21 @@
             <!-- Business Plans -->
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 @foreach([
-                    'retail' => ['name' => 'Retail Shop', 'price' => '50000', 'color' => 'green'],
-                    'wholesale' => ['name' => 'Wholesale Business', 'price' => '120,000', 'color' => 'blue'],
-                    'hardware' => ['name' => 'Hardware Store', 'price' => '200,000', 'color' => 'orange'],
-                    'supermarket' => ['name' => 'Supermarket', 'price' => '500,000', 'color' => 'purple']
+                    'retail' => ['name' => 'Retail Shop', 'monthly' => '15,000', 'color' => 'green'],
+                    'wholesale' => ['name' => 'Wholesale Business', 'monthly' => '15,000', 'color' => 'blue'],
+                    'hardware' => ['name' => 'Hardware Store', 'monthly' => '15,000', 'color' => 'orange'],
+                    'supermarket' => ['name' => 'Supermarket', 'monthly' => '30,000', 'color' => 'purple']
                 ] as $type => $plan)
                 <div class="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
                     <h3 class="text-xl font-bold mb-2 text-{{ $plan['color'] }}-300">{{ $plan['name'] }}</h3>
-                    <div class="text-2xl font-bold mb-2">UGX {{ $plan['price'] }}</div>
-                    <div class="text-sm text-gray-300 mb-4">Activation Fee</div>
+                    <div class="text-2xl font-bold mb-2">UGX {{ $plan['monthly'] }}</div>
+                    <div class="text-sm text-gray-300 mb-4">Per Month</div>
                     <ul class="text-sm space-y-1 mb-4">
                         <li>✅ Inventory Management</li>
                         <li>✅ Sales Tracking</li>
                         <li>✅ Basic Reports</li>
                         <li>✅ 24/7 Support</li>
                     </ul>
-                    <div class="text-xs text-gray-400">Monthly: UGX 15,000</div>
                 </div>
                 @endforeach
             </div>
@@ -92,10 +91,10 @@
            text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 
            focus:border-cyan-400 appearance-none cursor-pointer">
       <option value="">Select Business Type</option>
-      <option value="retail" class="text-gray-900">Retail Shop (UGX 50,000)</option>
-      <option value="wholesale" class="text-gray-900">Wholesale Business (UGX 120,000)</option>
-      <option value="hardware" class="text-gray-900">Hardware Store (UGX 200,000)</option>
-      <option value="supermarket" class="text-gray-900">Supermarket (UGX 500,000)</option>
+      <option value="retail" class="text-gray-900">Retail Shop (UGX 15,000/mo)</option>
+      <option value="wholesale" class="text-gray-900">Wholesale Business (UGX 15,000/mo)</option>
+      <option value="hardware" class="text-gray-900">Hardware Store (UGX 15,000/mo)</option>
+      <option value="supermarket" class="text-gray-900">Supermarket (UGX 30,000/mo)</option>
   </select>
 
   <!-- Arrow icon -->
@@ -173,7 +172,7 @@
                             Continue to Payment →
                         </button>
                         <p class="text-sm text-gray-300 mt-4">
-                            You'll pay the activation fee and then call admin for account setup
+                            You'll pay the subscription fee and then call admin for account setup
                         </p>
                     </div>
                 </form>

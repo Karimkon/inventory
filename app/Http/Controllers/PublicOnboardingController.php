@@ -73,8 +73,8 @@ class PublicOnboardingController extends Controller
     $plan = self::PLANS[$request->business_type];
     $reference = 'APP-' . Str::uuid()->toString();
 
-    // FOR ONBOARDING: Only charge activation fee, monthly fees will be paid later
-    $totalAmount = $plan['activation_fee']; // Only activation fee
+    // Charge monthly subscription fee based on selected months
+    $totalAmount = $plan['monthly_fee'] * $request->months;
 
     // Create onboarding application
     $application = OnboardingApplication::create([
@@ -88,12 +88,12 @@ class PublicOnboardingController extends Controller
         'activation_fee' => $plan['activation_fee'],
         'monthly_fee' => $plan['monthly_fee'],
         'months_paid' => $request->months, // Save selected months for future reference
-        'total_amount' => $totalAmount, // Only activation fee
+        'total_amount' => $totalAmount,
         'status' => 'pending',
     ]);
 
     return redirect()->route('onboarding.payment', $application)
-        ->with('success', 'Application submitted! Please pay the activation fee to proceed.');
+        ->with('success', 'Application submitted! Please complete subscription payment to proceed.');
 }
 
     /**
@@ -131,11 +131,13 @@ public function processPayment(Request $request, OnboardingApplication $applicat
         $reference = 'PAY-' . Str::uuid()->toString();
         $plan = self::PLANS[$application->business_type];
         
+        $totalAmount = $application->monthly_fee * ($application->months_paid ?? 1);
+
         $orderData = [
             "id" => Str::uuid()->toString(),
             "currency" => "UGX",
-            "amount" => $application->activation_fee, // Only activation fee
-            "description" => "Shop Activation Fee - {$plan['name']} (Subscription: {$application->months_paid} months)",
+            "amount" => $totalAmount,
+            "description" => "Monthly Subscription - {$plan['name']} ({$application->months_paid} month(s))",
             "callback_url" => route('onboarding.pesapal-callback'),
             "notification_id" => config('pesapal.notification_id'),
             "merchant_reference" => $reference,
@@ -153,10 +155,11 @@ public function processPayment(Request $request, OnboardingApplication $applicat
             ]
         ];
 
-        Log::info('Sending activation fee to Pesapal', [
-            'activation_fee' => $application->activation_fee,
+        Log::info('Sending subscription payment to Pesapal', [
+            'amount' => $totalAmount,
+            'monthly_fee' => $application->monthly_fee,
+            'months' => $application->months_paid,
             'description' => $orderData['description'],
-            'future_subscription' => $application->months_paid . ' months'
         ]);
 
         $response = $this->pesapalService->submitOrder($orderData);
@@ -177,11 +180,11 @@ public function processPayment(Request $request, OnboardingApplication $applicat
                 'pending_payment_reference' => $reference,
             ]);
 
-            Log::info('Activation payment initiated', [
+            Log::info('Subscription payment initiated', [
                 'application_id' => $application->id,
                 'tracking_id' => $response['order_tracking_id'],
-                'amount' => $application->activation_fee,
-                'future_subscription' => $application->months_paid . ' months'
+                'amount' => $totalAmount,
+                'months' => $application->months_paid,
             ]);
 
             return redirect()->away($response['redirect_url']);

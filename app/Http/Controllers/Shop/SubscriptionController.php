@@ -354,8 +354,8 @@ public function renewalCallback(Request $request)
             $orderData = [
                 "id" => Str::uuid()->toString(),
                 "currency" => "UGX",
-                "amount" => $subscription->activation_fee,
-                "description" => "Shop Activation Fee - " . $subscription->plan_details['name'],
+                "amount" => $subscription->monthly_fee,
+                "description" => "Monthly Subscription - " . $subscription->plan_details['name'],
                 "callback_url" => route('shop.subscription.pesapal-callback'),
                 "notification_id" => config('pesapal.notification_id'),
                 "merchant_reference" => $reference,

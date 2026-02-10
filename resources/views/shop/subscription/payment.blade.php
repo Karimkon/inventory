@@ -29,12 +29,8 @@
                                     <td><strong>{{ ucfirst($subscription->plan_type) }}</strong></td>
                                 </tr>
                                 <tr>
-                                    <td class="text-muted">Activation Fee:</td>
-                                    <td><strong class="text-primary">UGX {{ number_format($subscription->activation_fee) }}</strong></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">Monthly Fee:</td>
-                                    <td>UGX {{ number_format($subscription->monthly_fee) }}/month</td>
+                                    <td class="text-muted">Monthly Subscription:</td>
+                                    <td><strong class="text-primary">UGX {{ number_format($subscription->monthly_fee) }}</strong></td>
                                 </tr>
                                 <tr>
                                     <td class="text-muted">Status:</td>
@@ -48,7 +44,7 @@
 
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle"></i>
-                        You will be redirected to Pesapal to complete your payment of <strong>UGX {{ number_format($subscription->activation_fee) }}</strong>.
+                        You will be redirected to Pesapal to complete your payment of <strong>UGX {{ number_format($subscription->monthly_fee) }}</strong>.
                     </div>
 
                     <div class="d-flex gap-2 justify-content-center">

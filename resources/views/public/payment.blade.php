@@ -26,7 +26,7 @@
             <!-- Header -->
             <div class="text-center mb-8">
                 <h1 class="text-3xl font-bold mb-2">💳 Complete Payment</h1>
-                <p class="text-blue-200">{{ $plan['name'] }} - {{ $application->months_paid }} months subscription</p>
+                <p class="text-blue-200">{{ $plan['name'] }} - {{ $application->months_paid ?? 1 }} month(s) subscription</p>
                 <a href="{{ route('onboarding.show') }}" class="text-cyan-300 hover:text-cyan-100 text-sm mt-4 inline-block">
                     ← Back to Application
                 </a>
@@ -56,7 +56,7 @@
                     </div>
                     <div>
                         <span class="text-gray-400">Duration:</span>
-                        <div class="font-semibold">{{ $application->months_paid }} months</div>
+                        <div class="font-semibold">{{ $months }} month(s)</div>
                     </div>
                     <div>
                         <span class="text-gray-400">Reference:</span>
@@ -67,84 +67,35 @@
 
             <!-- Payment Card -->
             <div class="bg-white/10 backdrop-blur-lg rounded-xl p-8 border border-white/20">
+                @php
+                    $months = $application->months_paid ?? 1;
+                    $subscriptionTotal = $application->monthly_fee * $months;
+                @endphp
+
                 <!-- Payment Amount -->
                 <div class="text-center mb-6">
                     <div class="text-4xl font-bold text-green-400 mb-2">
-                        UGX {{ number_format($application->activation_fee) }}
+                        UGX {{ number_format($subscriptionTotal) }}
                     </div>
-                    <div class="text-gray-300">One-time Activation Fee</div>
-                    <div class="text-sm text-blue-300 mt-2">
-                        Subscription: {{ $application->months_paid }} months - UGX {{ number_format($application->monthly_fee * $application->months_paid) }} (Payable later)
-                    </div>
+                    <div class="text-gray-300">{{ $months }} Month(s) Subscription</div>
                 </div>
 
                 <!-- Cost Breakdown -->
                 <div class="bg-white/5 rounded-lg p-4 mb-6">
                     <div class="space-y-3 text-sm">
-                        <!-- Activation Fee - Pay Now -->
                         <div class="flex justify-between items-center">
                             <div>
-                                <span class="font-semibold">Activation Fee</span>
-                                <div class="text-xs text-gray-400">One-time setup fee</div>
+                                <span class="font-semibold">Monthly Fee</span>
+                                <div class="text-xs text-gray-400">UGX {{ number_format($application->monthly_fee) }} / month</div>
                             </div>
-                            <span class="text-green-400 font-bold">UGX {{ number_format($application->activation_fee) }}</span>
+                            <span class="text-gray-300">× {{ $months }} month(s)</span>
                         </div>
 
-                        <!-- Monthly Subscription - Future Payment -->
                         <div class="flex justify-between items-center border-t border-white/20 pt-3">
                             <div>
-                                <span class="font-semibold text-gray-300">Monthly Subscription</span>
-                                <div class="text-xs text-gray-400">
-                                    {{ $application->months_paid }} months × UGX {{ number_format($application->monthly_fee) }}/month
-                                </div>
+                                <span class="font-bold text-lg">Total to Pay Now</span>
                             </div>
-                            <span class="text-gray-400">UGX {{ number_format($application->monthly_fee * $application->months_paid) }}</span>
-                        </div>
-
-                        <!-- First Payment Due -->
-                        <div class="flex justify-between items-center border-t border-white/20 pt-3">
-                            <div>
-                                <span class="font-semibold text-yellow-300">First Subscription Payment</span>
-                                <div class="text-xs text-gray-400">Due after account activation</div>
-                            </div>
-                            <span class="text-yellow-300">UGX {{ number_format($application->monthly_fee) }}</span>
-                        </div>
-
-                        <!-- Total Pay Now -->
-                        <div class="flex justify-between items-center border-t border-white/20 pt-3">
-                            <div>
-                                <span class="font-bold text-lg">Pay Now</span>
-                                <div class="text-xs text-green-400">Activation fee only</div>
-                            </div>
-                            <span class="text-green-400 font-bold text-lg">UGX {{ number_format($application->activation_fee) }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payment Timeline -->
-                <div class="bg-blue-500/20 border border-blue-500/50 rounded-lg p-4 mb-6">
-                    <h4 class="font-bold mb-3 text-blue-300">📅 Payment Timeline</h4>
-                    <div class="space-y-3 text-sm">
-                        <div class="flex items-center">
-                            <div class="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
-                            <div>
-                                <span class="font-semibold">Step 1: Activation Fee</span>
-                                <div class="text-gray-300">Pay UGX {{ number_format($application->activation_fee) }} now to activate your account</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="w-3 h-3 bg-yellow-400 rounded-full mr-3"></div>
-                            <div>
-                                <span class="font-semibold">Step 2: Account Setup</span>
-                                <div class="text-gray-300">Call admin after payment to get your login credentials</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="w-3 h-3 bg-blue-400 rounded-full mr-3"></div>
-                            <div>
-                                <span class="font-semibold">Step 3: Monthly Subscription</span>
-                                <div class="text-gray-300">Pay UGX {{ number_format($application->monthly_fee) }} monthly starting next month</div>
-                            </div>
+                            <span class="text-green-400 font-bold text-lg">UGX {{ number_format($subscriptionTotal) }}</span>
                         </div>
                     </div>
                 </div>
@@ -156,8 +107,8 @@
                         <div>
                             <div class="font-bold mb-2">Important: Call After Payment</div>
                             <div class="text-sm">
-                                After completing payment, please call our admin at 
-                                <a href="tel:+256741613506" class="underline font-semibold text-white">+256-741613506</a> 
+                                After completing payment, please call our admin at
+                                <a href="tel:+256741613506" class="underline font-semibold text-white">+256-741613506</a>
                                 to complete your account setup and get your login credentials.
                             </div>
                         </div>
@@ -170,9 +121,9 @@
                     <!-- Hidden field for months -->
                     <input type="hidden" name="months" value="{{ $application->months_paid }}">
                     
-                    <button type="submit" 
+                    <button type="submit"
                             class="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 py-4 rounded-lg font-bold text-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center">
-                        <span>Pay Activation Fee - UGX {{ number_format($application->activation_fee) }}</span>
+                        <span>Pay Subscription - UGX {{ number_format($subscriptionTotal) }}</span>
                         <span class="ml-2">→</span>
                     </button>
                 </form>
@@ -187,8 +138,8 @@
             <div class="grid md:grid-cols-3 gap-6 mt-8 text-center">
                 <div class="bg-white/5 p-4 rounded-lg">
                     <div class="text-2xl mb-2">1️⃣</div>
-                    <h3 class="font-bold mb-2">Pay Activation</h3>
-                    <p class="text-sm text-gray-300">Pay one-time activation fee only</p>
+                    <h3 class="font-bold mb-2">Pay Subscription</h3>
+                    <p class="text-sm text-gray-300">Pay your monthly subscription</p>
                 </div>
                 <div class="bg-white/5 p-4 rounded-lg">
                     <div class="text-2xl mb-2">2️⃣</div>
@@ -204,7 +155,7 @@
 
             <!-- Subscription Details -->
             <div class="bg-white/5 rounded-xl p-6 border border-white/20 mt-8">
-                <h3 class="text-xl font-bold mb-4 text-center">Your {{ $application->months_paid }}-Month Subscription Includes:</h3>
+                <h3 class="text-xl font-bold mb-4 text-center">Your {{ $months }}-Month Subscription Includes:</h3>
                 <div class="grid md:grid-cols-2 gap-4 text-sm">
                     @foreach($plan['features'] as $feature)
                     <div class="flex items-center">
@@ -222,11 +173,10 @@
                     </div>
                 </div>
                 
-                <!-- Monthly Fee Notice -->
+                <!-- Renewal Notice -->
                 <div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                     <div class="text-center text-sm text-blue-300">
-                        <strong>Monthly Fee:</strong> UGX {{ number_format($application->monthly_fee) }} per month 
-                        (First payment due after activation)
+                        <strong>Renewal:</strong> UGX {{ number_format($application->monthly_fee) }} per month after your current period expires
                     </div>
                 </div>
             </div>
@@ -240,7 +190,7 @@
             
             payButton.addEventListener('click', function(e) {
                 // Optional: Add confirmation for better UX
-                if (!confirm('Confirm payment of UGX {{ number_format($application->activation_fee) }} activation fee?')) {
+                if (!confirm('Confirm payment of UGX {{ number_format($subscriptionTotal) }} subscription fee?')) {
                     e.preventDefault();
                 }
             });

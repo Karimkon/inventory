@@ -14,8 +14,8 @@
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i> 
-                        Select a plan that matches your business needs. You'll only pay the activation fee now.
+                        <i class="bi bi-info-circle"></i>
+                        Select a plan that matches your business needs. You'll pay the monthly subscription fee to get started.
                     </div>
 
                     <div class="row">
@@ -26,9 +26,8 @@
                                     <h6 class="mb-0">{{ $plan['name'] }}</h6>
                                 </div>
                                 <div class="card-body text-center">
-                                    <h3 class="text-primary">UGX {{ number_format($plan['activation_fee']) }}</h3>
-                                    <p class="text-muted">One-time Activation</p>
-                                    <p><strong>Monthly: UGX {{ number_format($plan['monthly_fee']) }}</strong></p>
+                                    <h3 class="text-primary">UGX {{ number_format($plan['monthly_fee']) }}</h3>
+                                    <p class="text-muted">Per Month</p>
                                     
                                     <ul class="list-unstyled text-start small">
                                         @foreach($plan['features'] as $feature)
