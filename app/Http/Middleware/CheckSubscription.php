@@ -42,6 +42,12 @@ class CheckSubscription
         if ($isExpired) {
             // Allow access to subscription pages so the user can renew
             $allowedRoutes = [
+                'shop.subscription.create',
+                'shop.subscription.store',
+                'shop.subscription.payment',
+                'shop.subscription.process-payment',
+                'shop.subscription.pesapal-callback',
+                'shop.subscription.manual-payment',
                 'shop.subscription.renew',
                 'shop.subscription.process-renewal',
                 'shop.subscription.renewal-callback',

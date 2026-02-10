@@ -166,11 +166,20 @@ public function renewalCallback(Request $request)
     $subscriptionId = session('pending_renewal_subscription_id');
     $renewalMonths = session('pending_renewal_months');
     $renewalAmount = session('pending_renewal_amount');
-    
-    $subscription = Subscription::find($subscriptionId);
+
+    $subscription = $subscriptionId ? Subscription::find($subscriptionId) : null;
+
+    // Fallback: look up by merchant reference if session expired
+    if (!$subscription && $orderMerchantReference) {
+        $subscription = Subscription::where('payment_reference', $orderMerchantReference)->first();
+    }
 
     if (!$subscription) {
-        \Log::error('Subscription not found in callback', ['subscription_id' => $subscriptionId]);
+        \Log::error('Subscription not found in renewal callback', [
+            'subscription_id' => $subscriptionId,
+            'tracking_id' => $orderTrackingId,
+            'merchant_ref' => $orderMerchantReference,
+        ]);
         return redirect()->route('shop.subscription.status')
             ->with('error', 'Subscription not found. Please contact support.');
     }
@@ -401,12 +410,24 @@ public function renewalCallback(Request $request)
             'all_params' => $request->all()
         ]);
 
-        // Get subscription from session or database
+        // Get subscription from session first, then fallback to DB lookup by tracking ID
         $subscriptionId = session('pending_subscription_id');
-        $subscription = Subscription::find($subscriptionId);
+        $subscription = $subscriptionId ? Subscription::find($subscriptionId) : null;
+
+        if (!$subscription && $orderTrackingId) {
+            $subscription = Subscription::where('pesapal_tracking_id', $orderTrackingId)->first();
+        }
+
+        if (!$subscription && $orderMerchantReference) {
+            $subscription = Subscription::where('payment_reference', $orderMerchantReference)->first();
+        }
 
         if (!$subscription) {
-            \Log::error('Subscription not found in callback', ['subscription_id' => $subscriptionId]);
+            \Log::error('Subscription not found in callback', [
+                'subscription_id' => $subscriptionId,
+                'tracking_id' => $orderTrackingId,
+                'merchant_ref' => $orderMerchantReference,
+            ]);
             return redirect()->route('shop.subscription.status')
                 ->with('error', 'Subscription not found. Please contact support.');
         }

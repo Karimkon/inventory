@@ -163,15 +163,16 @@ Route::prefix('shops')->name('shops.')->group(function () {
     // In your Admin Protected Routes section, add:
 Route::prefix('subscriptions')->name('subscriptions.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\SubscriptionController::class, 'index'])->name('index');
+
+    // Analytics routes (must be before {subscription} wildcard)
+    Route::get('/analytics/overview', [\App\Http\Controllers\Admin\SubscriptionController::class, 'analytics'])->name('analytics');
+    Route::get('/analytics/revenue', [\App\Http\Controllers\Admin\SubscriptionController::class, 'revenueReport'])->name('revenue');
+
     Route::get('/{subscription}', [\App\Http\Controllers\Admin\SubscriptionController::class, 'show'])->name('show');
     Route::post('/{subscription}/approve', [\App\Http\Controllers\Admin\SubscriptionController::class, 'approve'])->name('approve');
     Route::post('/{subscription}/reject', [\App\Http\Controllers\Admin\SubscriptionController::class, 'reject'])->name('reject');
     Route::post('/{subscription}/extend', [\App\Http\Controllers\Admin\SubscriptionController::class, 'extend'])->name('extend');
     Route::post('/{subscription}/deactivate', [\App\Http\Controllers\Admin\SubscriptionController::class, 'deactivate'])->name('deactivate');
-    
-    // Analytics routes
-    Route::get('/analytics/overview', [\App\Http\Controllers\Admin\SubscriptionController::class, 'analytics'])->name('analytics');
-    Route::get('/analytics/revenue', [\App\Http\Controllers\Admin\SubscriptionController::class, 'revenueReport'])->name('revenue');
 });
 
 });
@@ -252,8 +253,14 @@ Route::get('/history', [ShopProductController::class, 'salesHistory'])
         Route::post('/recalculate-values', [\App\Http\Controllers\Shop\DepreciationController::class, 'recalculateValues'])->name('recalculate-values');
     });
 
-    // Subscription Renewal Routes
+    // Subscription Routes
     Route::prefix('subscription')->name('subscription.')->group(function () {
+        Route::get('/create', [\App\Http\Controllers\Shop\SubscriptionController::class, 'create'])->name('create');
+        Route::post('/store', [\App\Http\Controllers\Shop\SubscriptionController::class, 'store'])->name('store');
+        Route::get('/payment/{subscription}', [\App\Http\Controllers\Shop\SubscriptionController::class, 'payment'])->name('payment');
+        Route::post('/payment/{subscription}/process', [\App\Http\Controllers\Shop\SubscriptionController::class, 'processPayment'])->name('process-payment');
+        Route::get('/pesapal-callback', [\App\Http\Controllers\Shop\SubscriptionController::class, 'pesapalCallback'])->name('pesapal-callback');
+        Route::get('/manual-payment/{subscription}', [\App\Http\Controllers\Shop\SubscriptionController::class, 'manualPayment'])->name('manual-payment');
         Route::get('/renew', [\App\Http\Controllers\Shop\SubscriptionController::class, 'showRenewal'])->name('renew');
         Route::post('/renew', [\App\Http\Controllers\Shop\SubscriptionController::class, 'processRenewal'])->name('process-renewal');
         Route::get('/renewal-callback', [\App\Http\Controllers\Shop\SubscriptionController::class, 'renewalCallback'])->name('renewal-callback');
